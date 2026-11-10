@@ -1,3 +1,4 @@
+// Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -14,6 +15,7 @@
 
 #include <stdarg.h>
 
+#include "enhanced.h"
 #include "timer.h"
 #include "video.h"
 
@@ -163,6 +165,11 @@ void swdisp(void)
 	// do sanity checks to make sure we never go out of range
 	displx = clamp_range(0, consoleplayer->ob_x - SCR_CENTR,
 	                     currgame->gm_max_x - SCR_WDTH - 1);
+
+	// Capture UI and a read-only world snapshot before classic drawing.
+	// Both modes still run the original drawing/sound path below.
+	Enhanced_Capture(vid_vram, vid_pitch, displx, ground + displx, objtop,
+	                 countmove);
 
 	// draw objects
 	for (ob = objtop; ob; ob = ob->ob_next) {

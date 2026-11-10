@@ -1,3 +1,4 @@
+// Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 //
 // Copyright(C) 2001-2005 Simon Howard
 //
@@ -15,6 +16,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "enhanced.h"
 #include "video.h"
 
 // this should be in a header somewhere
@@ -256,6 +258,7 @@ void Vid_Box(int x, int y, int w, int h, int c)
 // clear screen
 void Vid_ClearBuf(void)
 {
+	Enhanced_ClearFrame();
 	memset(vid_vram, 0, VRAMSIZE);
 }
 

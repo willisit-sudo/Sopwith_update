@@ -1,3 +1,4 @@
+// Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 // Modified 2026-11-10 for Sopwith Update: display scaling preferences.
 //
 // Copyright(C) 2001-2005 Simon Howard
@@ -20,6 +21,7 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include "enhanced.h"
 #include "sw.h"
 #include "swconf.h"
 #include "swinit.h"
@@ -119,6 +121,7 @@ static const struct touch_button *pressed_buttons[16];
 
 bool vid_fullscreen = false;
 bool vid_integer_scaling = false;
+bool vid_enhanced = false;
 static bool touch_area_enabled = false;
 static int ctrlbreak = 0;
 static bool initted = false;
@@ -141,6 +144,8 @@ static SDL_Surface *screenbuf = NULL;
 static SDL_Surface *argbbuffer = NULL;
 static SDL_Texture *texture = NULL;
 static SDL_Texture *texture_upscaled = NULL;
+static SDL_Texture *texture_enhanced = NULL;
+static uint32_t enhanced_pixels[ENHANCED_WIDTH * ENHANCED_HEIGHT];
 
 // convert a sopsym_t into a surface
 #define ICON_SCALE 4
@@ -230,19 +235,42 @@ void Vid_Update(void)
 	// Make sure the pillarboxes are kept clear each frame.
 	SDL_RenderClear(renderer);
 
-	// Render this intermediate texture into the upscaled texture
-	// using "nearest" integer scaling.
-	if (vid_integer_scaling) {
-		SDL_RenderCopy(renderer, texture, NULL, NULL);
+	if (vid_enhanced && Enhanced_HasFrame() && !touch_area_enabled) {
+		if (texture_enhanced == NULL) {
+			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+			texture_enhanced = SDL_CreateTexture(
+			    renderer, SDL_PIXELFORMAT_ARGB8888,
+			    SDL_TEXTUREACCESS_STREAMING, ENHANCED_WIDTH,
+			    ENHANCED_HEIGHT);
+			if (texture_enhanced == NULL) {
+				ErrorExit(
+				    "Unable to create enhanced texture: %s",
+				    SDL_GetError());
+			}
+		}
+		Enhanced_Render(enhanced_pixels, ENHANCED_WIDTH);
+		SDL_UpdateTexture(texture_enhanced, NULL, enhanced_pixels,
+		                  ENHANCED_WIDTH * sizeof(uint32_t));
+		SDL_RenderCopy(renderer, texture_enhanced, NULL, NULL);
 	} else {
-		SDL_SetRenderTarget(renderer, texture_upscaled);
-		SDL_RenderCopy(renderer, texture, NULL, NULL);
+		// Render this intermediate texture into the upscaled texture
+		// using "nearest" integer scaling.
+		if (vid_integer_scaling) {
+			SDL_RenderCopy(renderer, texture, NULL, NULL);
+		} else {
+			SDL_SetRenderTarget(renderer, texture_upscaled);
+			SDL_RenderCopy(renderer, texture, NULL, NULL);
 
-		// Finally, render this upscaled texture to screen using linear
-		// scaling.
-		SDL_SetRenderTarget(renderer, NULL);
-		SDL_RenderCopy(renderer, texture_upscaled, NULL, NULL);
+			// Finally, render this upscaled texture to screen using
+			// linear scaling.
+			SDL_SetRenderTarget(renderer, NULL);
+			SDL_RenderCopy(renderer, texture_upscaled, NULL, NULL);
+		}
 	}
+
+	SDL_SetWindowTitle(window, vid_enhanced
+	                               ? PACKAGE_STRING " - Enhanced (F9)"
+	                               : PACKAGE_STRING " - Classic (F9)");
 
 	// Draw!
 	SDL_RenderPresent(renderer);
@@ -551,6 +579,8 @@ void Vid_Shutdown(void)
 
 	SDL_DestroyRenderer(renderer);
 	renderer = NULL;
+	texture_enhanced = NULL;
+	Enhanced_ClearFrame();
 	SDL_DestroyWindow(window);
 	window = NULL;
 	SDL_FreeSurface(screenbuf);
@@ -711,6 +741,15 @@ static void CtrlKeyPress(SDL_Keycode k)
 static void KeyDown(SDL_KeyboardEvent *event)
 {
 	enum gamekey translated;
+
+	if (event->keysym.sym == SDLK_F9 && !CtrlDown() && !AltDown()) {
+		if (!event->repeat) {
+			vid_enhanced = !vid_enhanced;
+			swsaveconf();
+			Vid_Update();
+		}
+		return;
+	}
 
 	if (event->keysym.sym == SDLK_F8 && !CtrlDown() && !AltDown()) {
 		if (!event->repeat) {

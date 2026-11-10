@@ -1,3 +1,4 @@
+// Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 // Modified 2026-11-10 for Sopwith Update: display scaling preferences.
 //
 // Copyright(C) 1984-2000 David L. Clark
@@ -60,6 +61,7 @@ extern int controller_bindings[NUM_KEYS];
 
 extern bool vid_fullscreen;
 extern bool vid_integer_scaling;
+extern bool vid_enhanced;
 extern uint8_t *vid_vram;
 extern unsigned int vid_pitch;
 

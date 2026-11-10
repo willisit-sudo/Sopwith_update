@@ -15,3 +15,9 @@ Do not commit compiler downloads, headers, absolute local paths, generated confi
 ## Hosted build results
 
 The first hosted Linux GCC and Clang builds passed, including the display integration checks. GCC also passed Autotools distcheck. The inherited 32-bit Windows job failed during dependency installation because MSYS2 no longer supplies its requested mingw-w64-i686-SDL2 package. This fork targets 64-bit Windows; the obsolete 32-bit matrix entry was removed. This does not establish compatibility with 32-bit Windows.
+
+## Enhanced prototype
+
+The 10 November 2026 graphics increment adds src/enhanced.c and enhanced.h to the common source list. Tests now verify F9 routing, preference persistence, deterministic rendering, original mask and object preservation, and menu-frame clearing. The harness explicitly enables assertions even in optimized builds. The local SDL2 build remains compatible with the original build process.
+
+Presentation integration checks also passed locally with address and undefined-behavior sanitizers (upstream allocation-leak reporting disabled). They deliberately stage object visibility without running the flight simulation: a debug-mode trial of the existing AI encountered a pre-existing negative left shift in swobject.c:setdxdy. Flight arithmetic is unchanged in this graphics increment and remains a separate portability follow-up.

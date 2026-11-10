@@ -1,3 +1,4 @@
+# Modified 2026-11-10: enhanced presentation prototype.
 IWYU = iwyu
 IWYU_FLAGS = --error --mapping_file=.iwyu-overrides.imp
 IWYU_TRANSFORMED_FLAGS = $(patsubst %,-Xiwyu %,$(IWYU_FLAGS)) $(CFLAGS)
@@ -19,6 +20,7 @@ SUBDIRS = sdl
 bin_PROGRAMS = sopwith
 
 COMMON_SOURCES =                   \
+        enhanced.c  enhanced.h      \
         font.h                     \
         pcsound.h                  \
         std.h                      \
