@@ -45,6 +45,7 @@ static void CheckEnhanced(void)
 	// A staged in-flight preview using the real initialized game world.
 	successful_flight = true;
 	consoleplayer->ob_y += 65;
+	Notification("Presentation test");
 	swdisp();
 	assert(Enhanced_HasFrame());
 	for (ob = objtop; ob != NULL && n < MAX_OBJS; ob = ob->ob_next) {
@@ -72,13 +73,20 @@ static void CheckEnhanced(void)
 	Enhanced_Render(second, ENHANCED_WIDTH);
 	assert(memcmp(first, second,
 	              sizeof(*first) * ENHANCED_WIDTH * ENHANCED_HEIGHT) == 0);
+	// Notification glyphs are part of the independent UI overlay.
+	for (i = 0; i < SCR_WDTH * 8; ++i) {
+		if (classic[i] == 3) {
+			assert(first[(i / SCR_WDTH * 3) * ENHANCED_WIDTH +
+			             (i % SCR_WDTH) * 3] == 0xfff4e6c3u);
+		}
+	}
 	// Render every pose and offscreen edge without writing game data.
-	for (i = 0; i < 16; ++i) {
+	for (i = 0; i < 32; ++i) {
 		OBJECTS edge = *consoleplayer;
 		edge.ob_next = NULL;
-		edge.ob_angle = i;
-		edge.ob_orient = i & 1;
-		edge.ob_x = displx - 14 + i;
+		edge.ob_angle = i % 16;
+		edge.ob_orient = i / 16;
+		edge.ob_x = displx + (i & 1 ? SCR_WDTH - 2 : -14);
 		edge.ob_y = 199 - i;
 		edge.ob_symbol = &symbol_plane[i % 4].sym[i / 4];
 		Enhanced_Capture(vid_vram, vid_pitch, displx, ground + displx,

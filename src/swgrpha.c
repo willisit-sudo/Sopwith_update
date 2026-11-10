@@ -136,6 +136,15 @@ static void PrintHelp(void)
 	swputs(buf);
 }
 
+static void DrawNotification(void)
+{
+	if (Timer_GetMS() - notification_time < NOTIFICATION_TIME_MS) {
+		swposcur(0, 0);
+		swcolor(3);
+		swputs(notification_buf);
+	}
+}
+
 void swdisp(void)
 {
 	OBJECTS *ob;
@@ -166,6 +175,10 @@ void swdisp(void)
 	displx = clamp_range(0, consoleplayer->ob_x - SCR_CENTR,
 	                     currgame->gm_max_x - SCR_WDTH - 1);
 
+	// Include transient text in the UI snapshot, then draw it again over
+	// the classic world below to preserve its original foreground order.
+	DrawNotification();
+
 	// Capture UI and a read-only world snapshot before classic drawing.
 	// Both modes still run the original drawing/sound path below.
 	Enhanced_Capture(vid_vram, vid_pitch, displx, ground + displx, objtop,
@@ -190,11 +203,7 @@ void swdisp(void)
 
 	swground(ground + displx, 0, SCR_WDTH, GROUND_RENDER_PREF);
 
-	if (Timer_GetMS() - notification_time < NOTIFICATION_TIME_MS) {
-		swposcur(0, 0);
-		swcolor(3);
-		swputs(notification_buf);
-	}
+	DrawNotification();
 
 	// need to update the screen as we arent writing
 	// directly into vram any more

@@ -43,4 +43,4 @@ Based on Sopwith by David L. Clark and SDL Sopwith by Simon Howard and contribut
 
 Classic remains the default. Press F9 during a game to compare. Menus remain classic, while enhanced gameplay uses the original HUD as an overlay. Audio remains the original speaker emulation in both modes.
 
-The replacement biplane is drawn procedurally in its original flight poses; damaged and finale sprites and custom plane symbols retain shaded original artwork. Scenery and colours are an initial experiment, not a finished art direction. Enhanced world graphics currently fall back to classic when touch controls are active. This keeps the touch panel usable.
+The replacement biplane is drawn procedurally in its original flight poses; damaged and finale sprites and nonstandard-size plane symbols retain shaded original artwork. Scenery and colours are an initial experiment, not a finished art direction. Enhanced world graphics currently fall back to classic when touch controls are active. This keeps the touch panel usable.
