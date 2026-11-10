@@ -11,3 +11,7 @@ This restricted desktop environment has no system compiler or Autotools. An isol
 The unchanged upstream source compiled and its command-line help ran. This direct build does not validate Autotools packaging. A pre-existing signed-char comparison warning remains in SDL text-input handling. Native Windows builds and physical-display play testing are pending.
 
 Do not commit compiler downloads, headers, absolute local paths, generated config.h or build caches. Standard developer machines should use normal dependency packages.
+
+## Hosted build results
+
+The first hosted Linux GCC and Clang builds passed, including the display integration checks. GCC also passed Autotools distcheck. The inherited 32-bit Windows job failed during dependency installation because MSYS2 no longer supplies its requested mingw-w64-i686-SDL2 package. This fork targets 64-bit Windows; the obsolete 32-bit matrix entry was removed. This does not establish compatibility with 32-bit Windows.

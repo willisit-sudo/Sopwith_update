@@ -5,6 +5,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: ${{ matrix.config.name }}
@@ -38,14 +45,6 @@ jobs:
             msystem: mingw64
             msys-env: mingw-w64-x86_64
             suffix: "-win64"
-
-          - name: MSYS2 MINGW32
-            os: windows-latest
-            compiler: gcc
-            shell: 'msys2 {0}'
-            msystem: mingw32
-            msys-env: mingw-w64-i686
-            suffix: "-win32"
 
           - name: macOS arm64
             os: macos-latest
