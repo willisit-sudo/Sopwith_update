@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.fragglet.sdl_sopwith</id>
+  <name>Sopwith</name>
+  <developer_name>Dave L. Clark</developer_name>
+  <developer id="com.davidlclark">
+    <name>Dave L. Clark</name>
+  </developer>
+  <summary>Classic biplane shoot-'em up</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+  <description>
+    <p>
+      Sopwith is a modern port of the classic 1980s shoot 'em up game of the
+      same name. The game has a World War I aviation theme. The object of
+      Sopwith is to destroy all enemy targets with a somewhat limited airforce.
+    </p>
+    <p>
+      It can be played both in single player and multiplayer mode over a TCP/IP network.
+    </p>
+  </description>
+  <categories>
+    <category>Game</category>
+    <category>ArcadeGame</category>
+  </categories>
+  <url type="homepage">https://fragglet.github.io/sdl-sopwith/</url>
+  <url type="bugtracker">https://github.com/fragglet/sdl-sopwith/issues</url>
+  <url type="faq">https://fragglet.github.io/sdl-sopwith/FAQ.html</url>
+  <url type="contact">https://discord.gg/S2P5wUUzNU</url>
+  <url type="vcs-browser">https://github.com/fragglet/sdl-sopwith</url>
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-fantasy">moderate</content_attribute>
+    <content_attribute id="social-chat">mild</content_attribute>
+  </content_rating>
+  <launchable type="desktop-id">sopwith.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <caption>The player dropping a bomb</caption>
+      <image width="3200" height="1800">https://raw.githubusercontent.com/wjt/flathub/a70639daa7ba79dc26bc2cc7a55099c73e1fdf52/screenshots/1.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="2.9.0" date="2025-12-06">
+      <url>https://github.com/fragglet/sdl-sopwith/releases/tag/sdl-sopwith-2.9.0</url>
+      <description>
+        <p>A crash was fixed when any object was destroyed in multiplayer (thanks to
+           @alphanumericcharter and @scandox for reporting this bug).</p>
+        <p>Scoring has been fixed when killing animals (it is supposed to be negative,
+           but because of a bug, accidentally became positive).</p>
+        <p>The game now saves high scores to a system-wide high scores table (if
+           possible; or a per-user one otherwise).</p>
+        <p>The "tailspin" animation when a plane is crashing and in a nosedive was
+           tweaked to add two additional frames of animation.</p>
+        <p>Various Emscripten fixes were made; the previous release had to be rolled
+           back from the website because of them.</p>
+      </description>
+    </release>
+    <release version="2.8.0" date="2025-03-21">
+      <url>https://github.com/fragglet/sdl-sopwith/releases/tag/sdl-sopwith-2.8.0</url>
+      <description>
+        <p>Support was added for touch controls.</p>
+        <p>Gamepad support was added.</p>
+        <p>Sprites are now correctly clipped against the left side of
+           the screen.</p>
+        <p>Initial support was added for formation flying of AI planes.</p>
+        <p>There is a new "muted" color palette.</p>
+      </description>
+    </release>
+    <release version="2.7.0" date="2024-11-11">
+      <url>https://github.com/fragglet/sdl-sopwith/releases/tag/sdl-sopwith-2.7.0</url>
+      <description>
+        <p>Some tanks were changed to face in the opposite direction where it made more
+          sense, as a minor visual improvement. </p>
+        <p>Custom missions can now be used in network games (thanks NY00123). </p>
+        <p>A minor visual bug was fixed where objects appeared to be overlapping with
+          the ground sometimes. </p>
+        <p>A bug was fixed where targets could sometimes blow themselves up with their
+          own bullets (most notably the hangars by shooting their own flags). </p>
+        <p> Various improvements to custom mission support.</p>
+      </description>
+    </release>
+    <release version="2.6.0" date="2024-10-26">
+      <url>https://github.com/fragglet/sdl-sopwith/releases/tag/sdl-sopwith-2.6.0</url>
+      <description>
+        <p>The autopilot logic has been improved to avoid crashing the plane into the ground at low altitudes. This fixes a bug that made landing the plane almost impossible at higher game levels where the plane flies much faster (thanks to harlankoehn for the bug report).</p>
+        <p>A palette was added to simulate the Atari version of the game (according to the source code, anyway; it's not clear the Atari version was ever completed).</p>
+        <p>Planes are now shown on the menu, to give a feel for what the game will look like when choosing a palette.</p>
+        <p>The manual page was improved, including to add "bugs" and "examples" sections.</p>
+        <p>A minor tweak was made to one of the plane sprites to fix a one-pixel hole in the plane.</p>
+        <p>Signatures have been fixed for macOS executables; this fixes Sopwith when packaged for ARM machines.</p>
+        <p>There is now a `-v` option that shows the program version number.</p>
+        <p>An AppStream metainfo file was added to allow a Flatpak package (thanks Will Thompson)</p>
+      </description>
+    </release>
+    <release version="2.5.0" date="2024-04-19">
+      <url>https://github.com/fragglet/sdl-sopwith/releases/tag/sdl-sopwith-2.5.0</url>
+      <description>
+        <p>there is still no editor for making custom levels, but a python library has been added for programmatically generating levels. an example level has been included, the first custom level!</p>
+        <p>objects in custom levels can now be arbitrarily mirrored and rotated.</p>
+        <p>The numeric keypad enter key can now be used to switch into fullscreen mode, and also when entering a hostname (thanks TechKnight).</p>
+        <p>A long-standing bug was fixed where the computer planes would try to take off by flying straight up and then immediately stalling.</p>
+        <p>The score is no longer reset between levels (this was a bug).</p>
+        <p>At end of level, the remaining planes now "tick down" properly.</p>
+        <p>A bug was fixed where the app icon was shown as a black silhouette.</p>
+        <p>The manual page now documents the dashboard layout.</p>
+        <p>The score will no longer be drawn over the medals for very large values.</p>
+      </description>
+    </release>
+    <release version="2.4.0" date="2024-02-03">
+      <url>https://github.com/fragglet/sdl-sopwith/releases/tag/sdl-sopwith-2.4.0</url>
+      <description>
+        <p>It is now possible to make and load custom levels (there is no proper level editor available yet though).</p>
+        <p>There are now a number of alternative palettes that can be used that simulate different CGA palettes and old monitors (thanks techknight).</p>
+        <p>There are now hotkeys to end or restart the current game (thanks techknight).</p>
+        <p>There is now a -p command line option to specify TCP port number.</p>
+        <p>Sound is now oversampled to reduce sound aliasing (thanks @kmill).</p>
+        <p>Starting level is now synchronized between players at multiplayer start.</p>
+        <p>A bug was fixed with the keybindings menu not working (thanks ranguli, NY00123)</p>
+        <p>A missing include was added to fix build on Alpine Linux (thanks John Gebbie)</p>
+        <p>An input bug was fixed where a backspace would leave some visual corruption, and the cursor now blinks.</p>
+        <p>A bug was fixed where the same medal could be awarded twice.</p>
+        <p>Timing of music on the title screen was fixed (thanks @NY00123).</p>
+      </description>
+    </release>
+    <release version="2.3.0" date="2023-05-20">
+      <url>https://github.com/fragglet/sdl-sopwith/releases/tag/sdl-sopwith-2.3.0</url>
+      <description>
+        <p>Sound on Windows was fixed.</p>
+        <p>Medals are no longer cleared after a crash. Players now keep their medals until the end of the level, like their score.</p>
+        <p>The purple heart medal is now only awarded to players injured in combat. Surviving a bird strike or crashing into an ox doesn't cut it.</p>
+        <p>Out of tree builds were fixed (thanks Will Thompson)</p>
+        <p>The close button now quits the game (thanks Will Thompson)</p>
+        <p>The help screen is no longer shown when aborting the game.</p>
+      </description>
+    </release>
+  </releases>
+</component>

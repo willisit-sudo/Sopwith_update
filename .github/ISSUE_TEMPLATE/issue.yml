@@ -1,0 +1,44 @@
+name: Bug Report
+description: File a bug report.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: contact
+    attributes:
+      label: Version
+      description: >
+        What version of SDL Sopwith has the bug?
+        The version is shown on the title screen.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What platform/OS are you using?
+      options:
+        - Windows
+        - macOS
+        - Web
+        - Linux/BSD/other Unix
+        - Other (please write below)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: >
+        Try to give as much detail as you can. If possible, describe how to
+        reproduce the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What did you expect should happen?
+    validations:
+      required: true

@@ -1,0 +1,634 @@
+.TH sopwith-mission 5
+.
+.SH NAME
+ \.sop - Sopwith mission format
+.
+.SH DESCRIPTION
+The Sopwith mission format allows \fBsopwith\fR(6) to load custom user-defined
+levels and other modifications to the game. The files use
+.UR https://github.com/fragglet/yocton
+Yocton
+.UE
+as their basic format and should be UTF-8 encoded.
+.PP
+Each \.sop file can contain three different sections:
+.TP
+\fBlevel\fR
+This section contains level data. If present, the game's level is replaced
+with an entirely new level defined within this section. See \fBLEVEL SECTION\fR
+below.
+.TP
+\fBsymbols\fR
+This section allows the game's symbols (sprites) to be replaced. This allows
+graphical modifications to the game. See \fBSYMBOLS SECTION\fR below.
+.TP
+\fBsounds\fR
+This section allows the game's music to be replaced. See \fBSOUNDS SECTION\fR
+below.
+.TP
+\fBtitle\fR
+This section allows the game's title screen to be replaced. See \fBTITLE
+SECTION\fR below.
+.SH LEVEL SECTION
+The \fBlevel\fR section allows a complete new level to be defined. At present
+only a single level can be defined, although this may change in the future.
+Each level contains two types of subsection: \fBground\fR, which defines the
+level's terrain, and multiple \fBobject\fR sections, each of which defines
+an in-game object.
+.PP
+The \fBground\fR subsection is a list of decimal integer values that describe
+the level's terrain. Each value is defined through a Yocton property named
+\fB_\fR. Values should be in the range 16-199, and there should be a minimum
+of 320 (ie. one screen's worth). The following is an example:
+.PP
+.EX
+  ground {
+    _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+    ...
+  }
+.EE
+.PP
+Each \fBobject\fR subsection defines an object that appears in the level.
+The following is an example:
+.PP
+.EX
+  object {
+    type: PLANE
+    x: 30
+    orient: 0
+    territory_l: 0
+    territory_r: 0
+    faction: PLAYER1
+  }
+.EE
+.PP
+As seen, each object has a number of different properties:
+.TP
+\fBtype\fR
+See \fBOBJECT TYPES\fR below.
+.TP
+\fBx\fR
+The X coordinate within the level where the object appears. The Y coordinate
+is set automatically depending on the object type and can not be specified.
+.TP
+\fBorient\fR
+For planes, defines the direction in which planes face: 0 (right) or 1 (left).
+For ground targets, this controls the type of ground target; see \fBTARGET
+TYPES\fR below.
+.TP
+\fBfaction\fR
+Specifies the faction to which the object belongs. See \fBFACTIONS\fR below.
+.TP
+\fBtransform\fR
+For ground targets, this specifies a "transformation" to apply to the symbol.
+If you want to see an Ox do a headstand, this is the property to use, although
+it's more likely you'll want to use it to make tanks face the right direction.
+See \fBTRANSFORMATIONS\fR below for values.
+.TP
+\fBterritory_l\fR
+For planes, the left boundary of the range of the level the plane defends.
+.TP
+\fBterritory_r\fR
+For planes, the right boundary of the range of the level the plane defends.
+.PP
+The following is an example of a minimal \fBlevel\fR section that just
+contains a flat ground with no objects other than the player's plane:
+.PP
+.EX
+  level {
+    object {
+      type: PLANE
+      x: 30
+      orient: 0
+      territory_l: 0
+      territory_r: 0
+      faction: PLAYER1
+    }
+    ground {
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+      _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64 _: 64
+    }
+  }
+.EE
+.SH TRANSFORMATIONS
+Transformations can be applied to objects in a level by setting the
+\fBtransform\fR property to one of the following names or number:
+.TP
+\fBNONE\fR (or \fB0\fR)
+No transformation (original sprite). Default if no transform is specified
+.TP
+\fBROTATE90\fR (or \fB1\fR)
+Rotate 90 degrees counterclockwise
+.TP
+\fBROTATE180\fR (or \fB2\fR)
+Rotate 180 degrees
+.TP
+\fBROTATE270\fR (or \fB3\fR)
+Rotate 270 degrees counterclockwise (equivalent to rotating 90 degrees
+clockwise)
+.TP
+\fBFLIP\fR (or \fB4\fR)
+Flip vertically
+.TP
+\fBFLIP_ROTATE90\fR (or \fB5\fR)
+Flip vertically, then rotate 90 degrees clockwise
+.TP
+\fBMIRROR\fR (or \fB6\fR)
+Mirror horizontally
+.TP
+\fBMIRROR_ROTATE90\fR (or \fB7\fR)
+Mirror horizontally, then rotate 90 degrees clockwise
+.
+.SH OBJECT TYPES
+The following object types can appear in a level:
+.TP
+\fBPLANE\fR
+Defines either a player or computer-controlled plane. The \fBfaction\fR
+property controls whether it is a human player or computer-controlled player;
+see \fBFACTIONS\fR below.
+.
+Computer-controlled planes will defend their "territory", the range of which is
+defined by the \fBterritory_l\fR and \fBterritory_r\fR properties. If the
+player enters this territory, they will take off from their base and attack.
+.TP
+\fBTARGET\fR
+A ground target. The value of the \fBorient\fR property defines the type of
+target, see \fBTARGET TYPES\fR below. The value of the \fBfaction\fR property
+specifies the faction to which the target belongs. When one player destroys all
+targets owned by all enemy factions, the game advances to the next level.
+.TP
+\fBBALLOON\fR
+Observation balloon. The value of the \fBorient\fR property defines the type
+of balloon; 0 = spherical balloon, 1 = Caquot-style. The value of the
+\fBfaction\fR property specifies the faction to which the balloon belongs.
+.TP
+\fBPOWERUP\fR
+A collectible power-up item. The value of the \fBorient\fR property defines the
+type of power-up, see \fBPOWER-UP TYPES\fR below.
+.TP
+\fBOX\fR
+An Ox (type of cattle). The Ox does nothing except act as an obstacle, and does
+not need to be killed to advance to the next level. Does not appear in novice
+mode.
+.TP
+\fBBIRD\fR
+A single bird that flies randomly around the level. The bird acts as an
+obstacle that the player(s) must avoid. Does not appear in novice mode.
+.TP
+\fBFLOCK\fR
+A flock of birds moves along the top of the screen. The flock acts an obstacle
+and may disperse into many different birds if disturbed. Does not appear in
+novice mode.
+.SH FACTIONS
+Military objects belong to a "faction"; objects allied to a different faction
+are considered enemies. The color of the object indicates the faction:
+.TP
+\fBPLAYER1\fR
+For planes, cyan fuselage and magenta wings. This corresponds to the human
+player in single player mode, and player 1 in multiplayer mode.
+.TP
+\fBPLAYER2\fR
+For planes, magenta fuselage and cyan wings. This corresponds to the computer
+opponent in single player mode, and player 2 in multiplayer mode.
+.TP
+\fBNONE\fR
+Used for animals / non-military targets.
+.PP
+The following values are also recognized; they are currently (effectively)
+unused, but may be used in the future if the multiplayer feature is extended to
+support more than two players.
+.TP
+\fBPLAYER3\fR
+Maps to \fBPLAYER2\fR in single player mode, or \fBPLAYER1\fR in multiplayer
+mode. Planes of this faction are currently ignored in multiplayer mode.
+.TP
+\fBPLAYER4\fR
+Maps to \fBPLAYER2\fR. Planes of this faction are currently ignored in
+multiplayer mode.
+.TP
+\fBPLAYER5\fR, \fBPLAYER7\fR
+Maps to \fBPLAYER1\fR, but planes with this faction are currently ignored.
+.TP
+\fBPLAYER6\fR, \fBPLAYER8\fR
+Maps to \fBPLAYER2\fR, but planes with this faction are currently ignored.
+.SH SYMBOLS SECTION
+The \fBsymbols\fR section allows the game's graphics to be replaced. The
+section can contain a number of subsections, one for each type of graphic.
+Graphics are defined as multiline text strings. The following is an example of
+a \fBsymbols\fR section that changes the hangar graphic to add an extra (white)
+flag:
+.PP
+.EX
+  symbols {
+    swtrgsym {
+      0:
+      "    -                 -         \[rs]n" &
+      "    - # # # #         - * * * * \[rs]n" &
+      "    - # # # #         - * * * * \[rs]n" &
+      "    -                 -         \[rs]n" &
+      "    -                 -         \[rs]n" &
+      "    -                 -         \[rs]n" &
+      "    -                 -         \[rs]n" &
+      "* * * * * * * * * * * * * * * * \[rs]n" &
+      "* * * * * * * * * * * * * * * * \[rs]n" &
+      "* * - - - - - - - - - - - - * * \[rs]n" &
+      "* * - * * * * * * * * * * - * * \[rs]n" &
+      "* * - * * * * * * * * * * - * * \[rs]n" &
+      "* * - * * * * * * * * * * - * * \[rs]n" &
+      "* * - * * * * * * * * * * - * * \[rs]n" &
+      "* * - * * * * * * * * * * - * * \[rs]n" &
+      "* * - * * * * * * * * * * - * * \[rs]n"
+    }
+  }
+.EE
+.PP
+Graphics are limited to the original four CGA colors: black (space); cyan
+(asterisk); magenta (hyphen) and white (number sign / pound / octothorpe).
+Cyan and magenta are swapped for enemy planes (single player) and player 2
+(multiplayer).
+.PP
+The following graphics are defined:
+.TP
+\fBswplnsym\fR (16x16)
+Plane. There are four frames, for facing right (0), rotated 22.5 degrees
+counterclockwise (1), 45 degrees (2) and 67.5 degrees (3).
+.TP
+\fBswhitsym\fR (16x16)
+Crashing plane. There are two frames of animation.
+.TP
+\fBswwinsym\fR (16x16)
+Plane flying into the distance after completing the level. There are four
+frames of animation.
+.TP
+\fBswtrgsym\fR (16x16)
+Ground target. Each frame is a different target type and the values are those
+from \fBTARGET TYPES\fR below.
+.TP
+\fBswhtrsym\fR (16x16)
+Destroyed ground target. Each frame a different target type; the values are
+those from \fBTARGET TYPES\fR below. The number of pixels in the symbol control
+the size of the explosion when the target is destroyed.
+.TP
+\fBswballoonsym\fR (16x16)
+Observation balloon. Each type of balloon has three animation frames: drifting
+left, centered, and drifting right. Spherical balloon starts at frame 0 and
+Caquot-style balloon begins at frame 3.
+.TP
+\fBswoxsym\fR (16x16)
+Ox. There is one frame.
+.TP
+\fBswflksym\fR (16x16)
+Bird flock. There are two frames, for the "flapping wings" animation.
+.TP
+\fBswbrdsym\fR (4x2)
+Bird. There are two frames, for the "flapping wings" animation.
+.TP
+\fBswbmbsym\fR (8x8)
+Falling bomb. There are two frames, for facing right (0) and rotated 45
+degrees counterclockwise (1).
+.TP
+\fBswmscsym\fR (8x8)
+Missile. There are four frames, for facing right (0), rotated 22.5 degrees
+counterclockwise (1), 45 degrees (2) and 67.5 degrees (3).
+.TP
+\fBswbstsym\fR (8x8)
+Starburst (flare). There are two frames of animation.
+.TP
+\fBswpowerupsym\fR (16x16)
+Power-up items. There is one frame for each type of power-up. See \fBPOWER-UP
+TYPES\fR below.
+.TP
+\fBswpowercollsym\fR (16x16)
+Left-over base of power-up item after the power-up is collected or destroyed.
+There is one frame for each type of power-up. See \fBPOWER-UP TYPES\fR below.
+.TP
+\fBswexpsym\fR (8x8)
+Debris after an explosion. There are eight frames for different types of
+debris.
+.TP
+\fBswmedalsym\fR (8x12)
+Medals. There are three frames for each different type.
+.TP
+\fBswribbonsym\fR (8x2)
+Ribbons. There are six frames for each different type.
+.TP
+\fBswshtsym\fR (16x16)
+Shot out window. There is a single frame.
+.TP
+\fBswsplsym\fR (32x32)
+Bird "splatted" into window. There is a single frame.
+.SH TARGET TYPES
+.TP
+0
+Hangar
+.TP
+1
+Factory
+.TP
+2
+Fuel tank
+.TP
+3
+Tank
+.TP
+4
+Truck
+.TP
+5
+Tanker truck
+.TP
+6
+Flag
+.TP
+7
+Tent
+.TP
+8-12
+User-defined target; the \fBsymbols\fR section should be used to supply the
+graphics (see \fBSYMBOLS SECTION\fR above). Type 12 produces a big explosion
+like an oil tank when destroyed.
+.TP
+13-17
+"Passive" user-defined target (does not fire at enemy planes). Type 17 produces
+a big explosion like an oil tank when destroyed.
+.TP
+18
+Radio tower
+.TP
+19
+Water tower
+.SH POWER-UP TYPES
+.TP
+0
+Ammo (bullets), small
+.TP
+1
+Bombs, small
+.TP
+2
+Fuel tank, small
+.TP
+3
+Ammo (bullets), large (full restock)
+.TP
+4
+Bombs, large (full restock)
+.TP
+5
+Fuel tank, large (full refuel)
+.SH SOUNDS SECTION
+The \fBsounds\fR section allows the in-game music to be replaced. There is
+only one property at present, named \fBtitle_tune\fR; its value is a string
+containing a sequence of notes to play. The following is an example of a
+\fBsounds\fR section that replaces the title music with the beginning of "Au
+Clair de la Lune":
+.PP
+.EX
+  sounds {
+    title_tune:
+    "g4/r8/g4/r8/g4/r8/a4/r8/b2/r4/a2/r2/" &
+    "g4/r8/b4/r8/a4/r8/a4/r8/g2/r2/"
+  }
+.EE
+.PP
+As seen, the format consists of a number of musical notes (a-g) separated
+by '/' characters. The notes are in the C major scale. Each note is followed
+by a number that indicates the length of the note as a fraction of a whole
+note; for example, 2 means half-note, 4 means quarter-note, etc. The following
+additional syntax is also supported:
+.IP \(bu
+For a rest, use "r" instead of a note character. The syntax is otherwise
+identical to that for a normal note, with the only difference being that no
+note will be played.
+.IP \(bu
+To play a sharp, append a '+' character. For example, "g+4/" represents a
+quarter-length G#. Alternatively you can append a '-' to play a flat; for
+example "e-2/" is a half-length E-flat (aka D#).
+.IP \(bu
+Prefix a note with < or > to shift down or up an octave. All subsequent notes
+will be played in this octave.
+.IP \(bu
+Append a '.' character to play a dotted note. A dotted note plays for 50%
+longer than a normal note.
+.PP
+The original DOS version of Sopwith interpreted notes as being in the A minor
+scale, but this is believed to have been a mistake and notes are now assumed
+to be in the more common C major scale. This does, however, mean that tunes
+from DOS .exe hacks will play differently; any A or B notes will need to be
+shifted down one octave to convert to the C major scale.
+.SH TITLE SECTION
+The \fBtitle\fR section allows the game's title screen to be replaced.
+Defining an empty \fBtitle\fR block produces an empty title screen; you then
+include sub-blocks to build up the new title screen. The following sub-block
+types are supported:
+.TP
+\fBtext\fR
+Draw a text string on the screen. See \fBTITLE TEXT\fR below.
+.TP
+\fBsymbol\fR
+Display a symbol (sprite) on the screen. See \fBTITLE SYMBOL\fR below.
+.TP
+\fBground\fR
+Draw ground terrain on the screen. See \fBTITLE GROUND\fR below.
+.TP
+\fBline\fR
+Draw a line on the screen. See \fBTITLE LINE\fR below.
+.
+.SH TITLE TEXT
+Within a \fBtitle\fR section, a \fBtext\fR block draws text on the screen at a
+defined location. The following is a simple example title screen that just
+prints "Hello, world!" in the middle of the screen:
+.PP
+.EX
+  title {
+    text {
+      text: "Hello, world!"
+      x: 20
+      y: 9
+      align: CENTER
+    }
+  }
+.EE
+.PP
+The following properties are recognized:
+.TP
+\fBtext\fR
+The text string to show. Can contain Unicode characters, but only those in code
+page 437 will be rendered. If the text string is the special magic value of
+"__VERSION__", it is substituted for the program version.
+.TP
+\fBx\fR and \fBy\fR
+Coordinates for where to draw the text. If not specified, (0, 0) is used, which
+is the top-left of the screen. Note that these are in character cell positions;
+each character is 8x8 pixels. This is different to the pixel coordinates used
+for symbols. The screen is 40x25 character cells.
+.TP
+\fBcolor\fR
+The color to draw the text: one of 0 (black); 1 (cyan); 2 (magenta) or 3
+(white). If not specified, the default is white. Note that the game's palette
+selection setting may change these colors.
+.TP
+\fBalign\fR
+How to align the text; either LEFT (the default), CENTER, or RIGHT.
+.
+.SH TITLE SYMBOL
+Within a \fBtitle\fR section, a \fBsymbol\fR block draws a symbol (sprite) on
+the screen at a defined location. The following is an example of a title screen
+that just draws a plane in the middle of the screen.
+.PP
+.EX
+  title {
+    symbol {
+      name: swplnsym
+      frame: 0
+      x: 152
+      y: 75
+      transform: MIRROR
+      faction: PLAYER1
+    }
+  }
+.EE
+.PP
+The following properties are recognized:
+.TP
+\fBname\fR
+Name of the symbol to draw. Valid values are the same names described in the
+\fBSYMBOLS SECTION\fR section above. It is an error not to specify a name.
+.TP
+\fBframe\fR
+Frame number to draw. Frame numbers are the same as those described in the
+\fBSYMBOLS SECTION\fR section above. If not specified, frame 0 is drawn.
+.TP
+\fBx\fR and \fBy\fR
+Pixel coordinates for where to draw the symbol. If not specified, (0, 0) is
+used, which is the top-left of the screen. The screen is 320x200 pixels.
+.TP
+\fBtransform\fR
+Applies rotation or mirroring transforms to the sprite. If not specified, no
+transform is applied. See \fBTRANSFORMATIONS\fR above for values.
+.TP
+\fBfaction\fR
+Applies a palette swap to the colors of the sprite. If not specified, the
+normal colors are used. Valid values are the same as described in the
+\fBFACTIONS\fR section above.
+.
+.SH TITLE GROUND
+Within a \fBtitle\fR section, a \fBground\fR block draws a ground pattern of
+the kind seen in the game. The syntax is the same as described in \fBLEVEL
+SECTION\fR above. The following is an example of a title screen that shows a
+square wave pattern:
+.PP
+.EX
+  title {
+    ground {
+      _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80
+      _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70
+      _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80
+      _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70
+      _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80
+      _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70
+      _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80 _:  80
+      _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70 _:  70
+    }
+  }
+.EE
+.PP
+Some things to be aware of:
+.IP \(bu
+Ground sequences can be of any length, but should probably contain at least
+320 entries, which is the width of the game screen. Ideally you should include
+more, in case the game is ported to run on a device with a wider screen.
+.IP \(bu
+If the sequence length is greater than the screen width, the "middle" entries
+of the sequence are what will be drawn.
+.IP \(bu
+If the sequence length is less than the screen width, the pattern will be drawn
+in center of the screen.
+.IP \(bu
+The ground will be drawn differently depending on whether the game's "solid
+ground" option is turned on or not. To ignore the user's preference and force a
+particular drawing mode, use \fBground_solid\fR or \fBground_line\fR instead of
+\fBground\fR.
+.IP \(bu
+A title screen can define multiple ground patterns, and they will be drawn
+independently. However, it's probably best to use \fBground_line\fR to ensure
+the lines don't overlap when the "solid ground" option is turned on.
+.
+.SH TITLE LINE
+Within a \fBtitle\fR section, a \fBline\fR block draws a line between two
+screen locations. The following is an example that draws a square in the middle
+of the screen:
+.PP
+.EX
+  title {
+    line { x1: 170 y1: 90  x2: 170 y2: 70  color: 1 }
+    line { x1: 150 y1: 70  x2: 150 y2: 90  color: 2 }
+    line { x1: 150 y1: 90  x2: 170 y2: 90 }
+    line { x1: 170 y1: 70  x2: 150 y2: 70 }
+  }
+.EE
+.PP
+The following properties are recognized:
+.TP
+\fBx1\fR and \fBy1\fR
+Pixel coordinates for starting location. It is an error not to specify these.
+.TP
+\fBx2\fR and \fBy2\fR
+Pixel coordinates for end location. It is an error not to specify these.
+.TP
+\fBcolor\fR
+Color for the line; one of 0 (black); 1 (cyan); 2 (magenta) or 3 (white). If
+not specified, the default is white.
+.
+.SH SEE ALSO
+\fBsopwith\fR(6),
+.
+.SH AUTHORS
+This manual page was written by Simon Howard.
+.
+.SH HISTORY
+The original DOS version of Sopwith only supported a single level, although
+later versions increased the difficulty by repeatedly playing the same level
+again at increasing speeds. Some modifications were made by fans by hex-editing
+the DOS .exe file.
+.PP
+Some simple hacks just changed the name shown on the title screen (one changed
+it to "Red Baron", for example). Some more elaborate mods that changed the
+level itself included "Blokwit" and "Sokwith". Andrew Jenner even developed a
+basic level editor that allowed people to make their own maps, although the
+changes that can be made using this technique are inherently limited.
+.PP
+Full support for custom maps did not appear until 2024, with SDL Sopwith's v2.4
+release. Subsequent versions have extended the format and there will likely be
+further such extensions in the future.
