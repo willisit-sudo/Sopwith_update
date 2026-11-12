@@ -98,6 +98,25 @@ static void CheckEnhanced(void)
 	                 countmove);
 	// UI capture is usually before objects. Rebuild that frame for preview.
 	swdisp();
+	Enhanced_Render(first, ENHANCED_WIDTH);
+	for (int theme = THEME_MODERN_DAY; theme < THEME_COUNT; ++theme) {
+		enhanced_theme = theme;
+		Enhanced_Render(second, ENHANCED_WIDTH);
+		assert(memcmp(first, second,
+		              sizeof(*first) * ENHANCED_WIDTH *
+		                  ENHANCED_HEIGHT) != 0);
+		if (preview != NULL) {
+			char path[1024];
+			snprintf(path, sizeof(path), "%s/theme-%d.argb",
+			         preview, theme);
+			FILE *out = fopen(path, "wb");
+			assert(out != NULL);
+			assert(fwrite(second, sizeof(*second),
+			              ENHANCED_WIDTH * ENHANCED_HEIGHT,
+			              out) == ENHANCED_WIDTH * ENHANCED_HEIGHT);
+			fclose(out);
+		}
+	}
 	vid_enhanced = false;
 	memset(&event, 0, sizeof(event));
 	event.type = SDL_KEYDOWN;
@@ -118,7 +137,7 @@ static void CheckEnhanced(void)
 	assert(vid_enhanced);
 	vid_enhanced = false;
 	swloadconf();
-	assert(vid_enhanced);
+	assert(vid_enhanced && enhanced_theme == THEME_MOON);
 	assert(countmove == moves && gamenum == level && displx == camera &&
 	       explseed == seed);
 	for (i = 0; i < n; ++i)

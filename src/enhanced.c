@@ -27,6 +27,20 @@ static struct {
 	} objects[MAX_OBJS];
 } frame;
 
+int enhanced_theme;
+
+const char *Enhanced_ThemeName(void)
+{
+	switch (enhanced_theme) {
+	case THEME_MODERN_DAY:
+		return "Modern Day";
+	case THEME_MOON:
+		return "Moon";
+	default:
+		return "Biplane";
+	}
+}
+
 bool vid_modern_title = true;
 bool enhanced_title_frame;
 bool enhanced_settings_frame;
@@ -88,9 +102,70 @@ static void Pixel(uint32_t *p, unsigned int pitch, int x, int y, uint32_t c)
 	}
 }
 
+static bool CloudPuff(int x, int y, int cx, int cy, int radius)
+{
+	int dx = x - cx, dy = (y - cy) * 2;
+	return dx * dx + dy * dy < radius * radius;
+}
+
+static void ThemeSky(uint32_t *p, unsigned int pitch)
+{
+	int x, y;
+	for (y = 0; y < H; ++y) {
+		for (x = 0; x < W; ++x) {
+			uint32_t color = RGB(18, 29, 38);
+			if (y < (SCR_HGHT - HUD) * S) {
+				if (enhanced_theme == THEME_MOON) {
+					int dx = x - 742, dy = y - 133;
+					int distance = dx * dx + dy * dy;
+					unsigned int star = Noise(x / 2, y / 2);
+					color = RGB(13 + y / 50, 16 + y / 45,
+					            34 + y / 23);
+					if (star % 727 == 0)
+						color = RGB(168, 186, 218);
+					if (distance < 54 * 54) {
+						unsigned int land = Noise(
+						    (x + y / 2) / 15, y / 9);
+						color = land % 5 < 2
+						          ? RGB(112, 169, 145)
+						          : RGB(68, 126, 185);
+						if (dx + dy > 48)
+							color =
+							    RGB(38, 67, 106);
+					}
+				} else {
+					int world = x + frame.camera * S / 6;
+					int cloud_x = world % 390;
+					int cloud_y =
+					    y - 104 - (world / 390 % 3) * 51;
+					color = RGB(65 + y / 5, 135 + y / 8,
+					            188 + y / 13);
+					if (CloudPuff(cloud_x, cloud_y, 74, 2,
+					              42) ||
+					    CloudPuff(cloud_x, cloud_y, 108,
+					              -14, 48) ||
+					    CloudPuff(cloud_x, cloud_y, 150, 1,
+					              53) ||
+					    CloudPuff(cloud_x, cloud_y, 191, 10,
+					              31)) {
+						color = cloud_y > 9
+						          ? RGB(191, 211, 222)
+						          : RGB(234, 241, 244);
+					}
+				}
+			}
+			p[y * pitch + x] = color;
+		}
+	}
+}
+
 static void Background(uint32_t *p, unsigned int pitch)
 {
 	int x, y;
+	if (enhanced_theme != THEME_BIPLANE) {
+		ThemeSky(p, pitch);
+		return;
+	}
 	for (y = 0; y < H; ++y) {
 		int band = y / 24;
 		uint32_t c =
@@ -160,9 +235,21 @@ static void Terrain(uint32_t *p, unsigned int pitch)
 			else
 				c = (noise % 19 == 0) ? RGB(99, 80, 58)
 				                      : RGB(85, 70, 53);
+			if (enhanced_theme == THEME_MOON) {
+				int gray =
+				    depth < 3 ? 177 : (depth < 13 ? 120 : 83);
+				gray += (int) (noise % 13);
+				c = RGB(gray, gray + 3, gray + 13);
+			} else if (enhanced_theme == THEME_MODERN_DAY) {
+				c = depth < 3
+				      ? RGB(137, 162, 92)
+				      : (noise % 17 == 0 ? RGB(83, 105, 70)
+				                         : RGB(64, 86, 62));
+			}
 			Pixel(p, pitch, x, y, c);
 		}
-		if (Noise(world_x / 3, 7) % 11 == 0) {
+		if (enhanced_theme == THEME_BIPLANE &&
+		    Noise(world_x / 3, 7) % 11 == 0) {
 			Pixel(p, pitch, x, top - 1, RGB(136, 157, 72));
 			Pixel(p, pitch, x, top - 2, RGB(136, 157, 72));
 		}
@@ -243,6 +330,37 @@ static uint32_t PlaneMaterial(int x, int y, bool enemy, int phase)
 	return c;
 }
 
+// Side-on silhouettes share the biplane's visual anchor and rotation.
+static uint32_t FlightMaterial(int x, int y, bool enemy, int phase)
+{
+	if (enhanced_theme == THEME_BIPLANE)
+		return PlaneMaterial(x, y, enemy, phase);
+
+	bool moon = enhanced_theme == THEME_MOON;
+	int height = abs(y - 24);
+	uint32_t trim = enemy ? RGB(224, 87, 69) : RGB(79, 206, 222);
+	if (moon && x >= 3 && x < 10 && height <= (phase ? 3 : 2))
+		return x < 6 ? RGB(91, 135, 250) : RGB(192, 240, 255);
+	if (x >= 9 && x <= 43 && height <= (43 - x) / 5 + 1) {
+		if (x >= 26 && x <= 33 && y >= 20 && y <= 23)
+			return RGB(42, 83, 111);
+		if (x >= 13 && x < 19)
+			return trim;
+		return y < 24 ? RGB(218, 226, 224) : RGB(118, 141, 150);
+	}
+	if (moon) {
+		if (x >= 8 && x <= 31 && height >= 5 &&
+		    height <= (34 - x) / 3 + 3)
+			return height >= 9 ? trim : RGB(166, 182, 198);
+	} else {
+		if (x >= 9 && x <= 17 && y >= 13 && y <= 22 && x <= y - 3)
+			return x < 12 ? trim : RGB(168, 185, 196);
+		if (x >= 15 && x <= 31 && y >= 25 && y <= 32 && x + y <= 58)
+			return y > 29 ? RGB(103, 126, 141) : RGB(190, 202, 210);
+	}
+	return 0;
+}
+
 static void Plane(uint32_t *p, unsigned int pitch, int n)
 {
 	int x, y, angle = (frame.objects[n].angle % ANGLES + ANGLES) % ANGLES;
@@ -257,7 +375,7 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 			if (frame.objects[n].inverted)
 				sy = 47 - sy;
 			sprite[y][x] =
-			    PlaneMaterial(sx, sy, enemy, frame.tick & 1);
+			    FlightMaterial(sx, sy, enemy, frame.tick & 1);
 		}
 	}
 	for (y = 0; y < 48; ++y) {
@@ -270,6 +388,59 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 				color = RGB(32, 42, 47);
 			}
 			if (color != 0)
+				Pixel(p, pitch, frame.objects[n].x * S + x,
+				      frame.objects[n].y * S + y, color);
+		}
+	}
+}
+
+static void ThemedTarget(uint32_t *p, unsigned int pitch, int n)
+{
+	const sopsym_t *sym = frame.objects[n].symbol;
+	int width = sym->w * S, height = sym->h * S;
+	int kind = frame.objects[n].inverted;
+	bool moon = enhanced_theme == THEME_MOON;
+	bool vehicle = frame.objects[n].type == OX || kind == TARGET_TANK ||
+	               kind == TARGET_TRUCK || kind == TARGET_TANKER_TRUCK;
+	bool fuel = kind == TARGET_OIL_TANK;
+	uint32_t edge = RGB(34, 43, 49);
+	uint32_t wall = moon ? RGB(166, 178, 195) : RGB(157, 166, 151);
+	uint32_t roof = moon ? RGB(205, 216, 229) : RGB(101, 127, 137);
+	int x, y;
+
+	for (y = 0; y < height; ++y) {
+		int v = y * 48 / height;
+		for (x = 0; x < width; ++x) {
+			int u = x * 48 / width;
+			uint32_t color = 0;
+			if (vehicle) {
+				if (v >= 35 && u >= 4 && u <= 44)
+					color =
+					    v >= 43 || u % 8 == 0 ? edge : wall;
+				if (v >= 28 && v < 38 && u >= 6 && u <= 42)
+					color = moon ? roof : RGB(103, 127, 71);
+				if (v >= 21 && v < 30 && u >= 14 && u <= 33)
+					color = roof;
+				if (v >= 23 && v < 26 && u >= 29 && u <= 46)
+					color =
+					    moon ? RGB(116, 223, 239) : edge;
+			} else if (u >= 4 && u <= 43 && v >= 12 && v <= 46) {
+				int dx = u - 24, dy = v - 35;
+				if (moon && v < 32 &&
+				    dx * dx + dy * dy > 22 * 22)
+					continue;
+				color = u <= 5 || u >= 42 || v >= 44
+				          ? edge
+				          : (v < 22 ? roof : wall);
+				if (v >= 26 && v <= 32 && u % 11 >= 4)
+					color = moon ? RGB(84, 206, 221)
+					             : RGB(54, 76, 89);
+				if (fuel && v >= 34 && v <= 37)
+					color = RGB(210, 127, 72);
+				else if (u >= 21 && u <= 29 && v >= 36)
+					color = edge;
+			}
+			if (color)
 				Pixel(p, pitch, frame.objects[n].x * S + x,
 				      frame.objects[n].y * S + y, color);
 		}
@@ -293,6 +464,17 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 	     frame.objects[n].state == WOUNDSTALL) &&
 	    sym->w == 16 && sym->h == 16) {
 		Plane(p, pitch, n);
+		return;
+	}
+	if (enhanced_theme == THEME_MOON && type == OX &&
+	    frame.objects[n].state == STANDING) {
+		ThemedTarget(p, pitch, n);
+		return;
+	}
+	if (enhanced_theme != THEME_BIPLANE && type == TARGET &&
+	    frame.objects[n].state == STANDING && sym->w == 16 &&
+	    sym->h == 16 && frame.objects[n].inverted <= TARGET_TANKER_TRUCK) {
+		ThemedTarget(p, pitch, n);
 		return;
 	}
 	for (y = 0; y < sym->h; ++y) {

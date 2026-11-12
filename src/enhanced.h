@@ -16,6 +16,14 @@ void Enhanced_Capture(const uint8_t *ui, unsigned int pitch, int camera,
                       int tick);
 // Pixels are opaque 0xAARRGGBB, pitch measured in pixels.
 void Enhanced_Render(uint32_t *pixels, unsigned int pitch);
+enum flight_theme {
+	THEME_BIPLANE,
+	THEME_MODERN_DAY,
+	THEME_MOON,
+	THEME_COUNT
+};
+extern int enhanced_theme;
+const char *Enhanced_ThemeName(void);
 extern bool vid_modern_title;
 extern bool enhanced_title_frame;
 extern bool enhanced_settings_frame;

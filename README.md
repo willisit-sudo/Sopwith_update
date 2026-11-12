@@ -54,3 +54,5 @@ The Title settings menu previews Classic and Modern artwork and music as you swi
 Modern title music uses the same score as Classic with a layered synth voice. The stock tune is “The U.S. Air Force” (Wild Blue Yonder). Custom mission title tunes also play through either voice.
 
 Menu artwork applies to the splash, Options and Key bindings. Title music uses the same original melody in either voice.
+
+In Options, Flight artwork cycles through Classic, Biplane, Modern Day and Moon. F9 switches between Classic and the last enhanced theme. The artwork uses the existing game state and collision masks. Modern Day depicts jets, vehicles and facilities under fluffy clouds. Moon depicts starfighters and lunar bases.

@@ -73,6 +73,7 @@ static const struct conf_option confoptions[] = {
     {"conf_medals", CONF_BOOL, {&conf_medals}},
     {"vid_fullscreen", CONF_BOOL, {&vid_fullscreen}},
     {"vid_integer_scaling", CONF_BOOL, {&vid_integer_scaling}},
+    {"enhanced_theme", CONF_INT, {&enhanced_theme}},
     {"vid_enhanced", CONF_BOOL, {&vid_enhanced}},
     {"vid_modern_title", CONF_BOOL, {&vid_modern_title}},
     {"snd_loss_cue", CONF_BOOL, {&snd_loss_cue}},
@@ -171,7 +172,12 @@ static void ParseConfigLine(const char *config_file, int lineno, char *line)
 		*opt->value.b = atoi(value) != 0;
 		break;
 	case CONF_INT:
-		if (!strcasecmp(opt->name, "conf_video_palette")) {
+		if (opt->value.i == &enhanced_theme) {
+			int theme = atoi(value);
+			enhanced_theme = theme >= 0 && theme < THEME_COUNT
+			                   ? theme
+			                   : THEME_BIPLANE;
+		} else if (!strcasecmp(opt->name, "conf_video_palette")) {
 			// If an invalid video palette number was loaded, use
 			// palette 0
 			if (atoi(value) >= (Vid_GetNumVideoPalettes())) {
@@ -319,7 +325,7 @@ static const struct menuitem options_menu_items[] = {
     CONFIG_OPTION("Run fullscreen", "vid_fullscreen"),
 #endif
     CONFIG_OPTION("Enhanced audio", "snd_enhanced"),
-    CONFIG_OPTION("Enhanced graphics", "vid_enhanced"),
+    CONFIG_OPTION("Flight artwork", "enhanced_theme"),
     CONFIG_OPTION("Crisp pixel scaling", "vid_integer_scaling"),
     CONFIG_OPTION("Video palette", "conf_video_palette"),
     CONFIG_OPTION("Solid ground", "conf_solidground"),

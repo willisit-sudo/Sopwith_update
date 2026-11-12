@@ -94,7 +94,16 @@ enum menu_action ToggleConfigOption(const struct menuitem *item)
 		break;
 	case CONF_INT:
 		// TODO: This should not be a special case.
-		if (!strcasecmp(opt->name, "conf_video_palette")) {
+		if (opt->value.i == &enhanced_theme) {
+			if (!vid_enhanced) {
+				enhanced_theme = THEME_BIPLANE;
+				vid_enhanced = true;
+			} else if (enhanced_theme == THEME_COUNT - 1) {
+				vid_enhanced = false;
+			} else {
+				++enhanced_theme;
+			}
+		} else if (!strcasecmp(opt->name, "conf_video_palette")) {
 			*opt->value.i =
 			    (*opt->value.i + 1) % Vid_GetNumVideoPalettes();
 			Vid_SetVideoPalette(*opt->value.i);
@@ -171,7 +180,9 @@ static void DrawConfigOption(const struct menuitem *item)
 		}
 		break;
 	case CONF_INT:
-		if (!strcasecmp(opt->name, "conf_video_palette")) {
+		if (opt->value.i == &enhanced_theme) {
+			swputs(vid_enhanced ? Enhanced_ThemeName() : "Classic");
+		} else if (!strcasecmp(opt->name, "conf_video_palette")) {
 			swputs(Vid_GetVideoPaletteName(*opt->value.i));
 		}
 		break;
