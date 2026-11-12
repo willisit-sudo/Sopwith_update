@@ -183,12 +183,12 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -q install clang-format
+        sudo apt -q install clang-format-18
     - uses: actions/checkout@v6
     - name: Check formatting
       if: '!cancelled()'
       run: |
-        clang-format -i {src,src/sdl}/*.[ch]
+        clang-format-18 -i {src,src/sdl}/*.[ch]
         git diff > formatting-fixes.diff
         if ! grep "" formatting-fixes.diff; then
           rm -f formatting-fixes.diff
