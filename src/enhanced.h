@@ -18,6 +18,7 @@ void Enhanced_Capture(const uint8_t *ui, unsigned int pitch, int camera,
 void Enhanced_Render(uint32_t *pixels, unsigned int pitch);
 extern bool vid_modern_title;
 extern bool enhanced_title_frame;
+extern bool enhanced_settings_frame;
 void Enhanced_RenderTitle(uint32_t *pixels, const uint8_t *ui,
                           unsigned int pitch);
 #endif

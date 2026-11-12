@@ -300,7 +300,7 @@ static const struct menu keys_menu = {
 extern void TitleSettingsBackground(void *unused);
 
 static const struct menuitem title_menu_items[] = {
-    CONFIG_OPTION("Splash artwork", "vid_modern_title"),
+    CONFIG_OPTION("Menu artwork", "vid_modern_title"),
     CONFIG_OPTION("Title music", "snd_modern_music"),
     CONFIG_OPTION("Plane loss music", "snd_loss_cue"),
     {0, NULL},

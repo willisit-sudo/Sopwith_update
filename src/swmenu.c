@@ -123,6 +123,7 @@ enum menu_action ToggleConfigOption(const struct menuitem *item)
 void FullscreenBackground(void *_title)
 {
 	const char *title = _title;
+	enhanced_title_frame = enhanced_settings_frame = vid_modern_title;
 	int title_len = strlen(title), x = 19 - title_len / 2;
 
 	// Planes on the menus look decorative but serve a real

@@ -52,3 +52,5 @@ Press **S** for ground targets only or **C** for ground targets and enemy planes
 The Title settings menu previews Classic and Modern artwork and music as you switch them. Plane loss music in the same menu controls a short cue when your plane crashes.
 
 Modern title music uses the same score as Classic with a layered synth voice. The stock tune is “The U.S. Air Force” (Wild Blue Yonder). Custom mission title tunes also play through either voice.
+
+Menu artwork applies to the splash, Options and Key bindings. Title music uses the same original melody in either voice.

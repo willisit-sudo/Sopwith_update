@@ -29,10 +29,12 @@ static struct {
 
 bool vid_modern_title = true;
 bool enhanced_title_frame;
+bool enhanced_settings_frame;
 
 void Enhanced_ClearFrame(void)
 {
 	enhanced_title_frame = false;
+	enhanced_settings_frame = false;
 	frame.valid = false;
 }
 bool Enhanced_HasFrame(void)
@@ -413,6 +415,14 @@ void Enhanced_RenderTitle(uint32_t *pixels, const uint8_t *ui,
 			if (y >= 160 * S)
 				color = y == 160 * S ? RGB(112, 171, 164)
 				                     : RGB(18, 31, 42);
+			if (enhanced_settings_frame) {
+				color =
+				    RGB(18 + y / 90, 31 + y / 55, 42 + y / 50);
+				if (y < 32 * S)
+					color = RGB(30, 60, 72);
+				else if (y == 32 * S || y == 176 * S)
+					color = RGB(68, 113, 119);
+			}
 			unsigned int ink = ui[(y / S) * pitch + x / S] & 3;
 			pixels[y * W + x] = ink ? inks[ink] : color;
 		}
