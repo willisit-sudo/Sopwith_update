@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-12: first playable title, music and round results.
 //
 // Copyright(C) 1984-2000 David L. Clark
@@ -18,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "enhanced.h"
 #include "pcsound.h"
 #include "timer.h"
 #include "video.h"
@@ -160,7 +162,12 @@ static void DrawConfigOption(const struct menuitem *item)
 	}
 	switch (opt->type) {
 	case CONF_BOOL:
-		swputs(*opt->value.b ? "on" : "off");
+		if (opt->value.b == &snd_modern_music ||
+		    opt->value.b == &vid_modern_title) {
+			swputs(*opt->value.b ? "Modern" : "Classic");
+		} else {
+			swputs(*opt->value.b ? "on" : "off");
+		}
 		break;
 	case CONF_INT:
 		if (!strcasecmp(opt->name, "conf_video_palette")) {

@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-12: first playable title, music and round results.
 //
 // Copyright(C) 1984-2000 David L. Clark
@@ -354,6 +355,16 @@ static void TitleScreenBackground(void *unused)
 {
 	swtitln();
 	clrprmpt();
+}
+
+void TitleSettingsBackground(void *unused)
+{
+	title_screen_start = Timer_GetMS();
+	TitleScreenBackground(NULL);
+	swcolor(1);
+	swposcur(0, 24);
+	swputs("ESC - Back");
+	swposcur(0, 20);
 }
 
 static bool gethost(void)

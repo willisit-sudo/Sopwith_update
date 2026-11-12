@@ -1,4 +1,5 @@
 // Modified 2026-11-12: switchable synthesized audio.
+// Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -1177,6 +1178,10 @@ bool moveox(OBJECTS *ob)
 bool crashpln(OBJECTS *ob)
 {
 	const original_ob_t *orig_ob = ob->ob_original_ob;
+
+	if (ob == consoleplayer && ob->ob_state != CRASHED) {
+		Speaker_PlaneLoss(true);
+	}
 
 	if (ob->ob_dx < 0) {
 		ob->ob_angle = (ob->ob_angle + 2) % ANGLES;

@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: keep Options entries clear of the Escape hint.
 // Modified 2026-11-12: switchable synthesized audio.
@@ -74,6 +75,7 @@ static const struct conf_option confoptions[] = {
     {"vid_integer_scaling", CONF_BOOL, {&vid_integer_scaling}},
     {"vid_enhanced", CONF_BOOL, {&vid_enhanced}},
     {"vid_modern_title", CONF_BOOL, {&vid_modern_title}},
+    {"snd_loss_cue", CONF_BOOL, {&snd_loss_cue}},
     {"snd_modern_music", CONF_BOOL, {&snd_modern_music}},
     {"snd_enhanced", CONF_BOOL, {&snd_enhanced}},
     {"snd_tinnyfilter", CONF_BOOL, {&snd_tinnyfilter}},
@@ -295,15 +297,18 @@ static const struct menu keys_menu = {
     keys_menu_items,
 };
 
+extern void TitleSettingsBackground(void *unused);
+
 static const struct menuitem title_menu_items[] = {
-    CONFIG_OPTION("Modern splash", "vid_modern_title"),
-    CONFIG_OPTION("Modern title music", "snd_modern_music"),
+    CONFIG_OPTION("Splash artwork", "vid_modern_title"),
+    CONFIG_OPTION("Title music", "snd_modern_music"),
+    CONFIG_OPTION("Plane loss music", "snd_loss_cue"),
     {0, NULL},
 };
 
 static const struct menu title_menu = {
-    FullscreenBackground,
-    "TITLE SETTINGS",
+    TitleSettingsBackground,
+    NULL,
     title_menu_items,
 };
 

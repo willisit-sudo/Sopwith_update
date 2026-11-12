@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: switchable synthesized audio.
 //
@@ -36,6 +37,8 @@ void Speaker_Output(unsigned short count);
 extern bool snd_tinnyfilter;
 extern bool snd_enhanced;
 extern bool snd_modern_music;
+extern bool snd_loss_cue;
+void Speaker_PlaneLoss(bool playing);
 void Speaker_TitleMusic(bool playing);
 
 // Called from the game thread.

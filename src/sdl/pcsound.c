@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: switchable synthesized audio.
 //
@@ -45,6 +46,9 @@ struct filter {
 bool snd_tinnyfilter = 1;
 bool snd_enhanced;
 bool snd_modern_music = true;
+bool snd_loss_cue = true;
+static unsigned int loss_sample;
+static bool loss_playing;
 static bool modern_title_playing;
 static unsigned int music_sample;
 static bool sound_initted = false;
@@ -322,6 +326,36 @@ static void MixTitleMusic(int16_t *stream, int count)
 	}
 }
 
+void Speaker_PlaneLoss(bool playing)
+{
+	if (!sound_initted || (playing && (!snd_loss_cue || !soundflg)))
+		return;
+	SDL_LockAudioDevice(audio_dev);
+	loss_playing = playing;
+	loss_sample = 0;
+	SDL_UnlockAudioDevice(audio_dev);
+}
+
+static void MixPlaneLoss(int16_t *stream, int count)
+{
+	static const float melody[] = {440.0f, 349.23f, 293.66f, 220.0f};
+	unsigned int note_samples = output_freq / 5;
+	for (int i = 0; i < count && loss_playing; ++i) {
+		unsigned int note = loss_sample / note_samples;
+		float time = (loss_sample % note_samples) / (float) output_freq;
+		float phase = 2.0f * M_PI * melody[note] * time;
+		float envelope = fminf(time * 125.0f, 1.0f) *
+		                 fminf((0.2f - time) * 20.0f, 1.0f) *
+		                 expf(-6.0f * time);
+		int mixed = stream[i] +
+		            (int) (4900.0f * envelope *
+		                   (sinf(phase) + 0.24f * sinf(phase * 2.0f)));
+		stream[i] = (int16_t) clamp_range(-32768, mixed, 32767);
+		if (++loss_sample == note_samples * arrlen(melody))
+			loss_playing = false;
+	}
+}
+
 // SDL callback function to generate sound output
 static void SoundCallback(void *userdata, Uint8 *stream8, int len)
 {
@@ -346,6 +380,7 @@ static void SoundCallback(void *userdata, Uint8 *stream8, int len)
 	}
 	if (enhanced.active) {
 		MixEnhanced(stream, len);
+		MixPlaneLoss(stream, len);
 		lasttime = 0;
 		return;
 	}
@@ -366,6 +401,7 @@ static void SoundCallback(void *userdata, Uint8 *stream8, int len)
 		stream[i] = (signed int) (sample * VOLUME);
 	}
 
+	MixPlaneLoss(stream, len);
 	lasttime += len;
 	if (current_freq > 0.1) {
 		lasttime = lasttime % (int) (1000 * output_freq / current_freq);

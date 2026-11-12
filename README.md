@@ -48,3 +48,5 @@ The replacement biplane is drawn procedurally in its original flight poses; dama
 ## First playable
 
 Press **S** for ground targets only or **C** for ground targets and enemy planes. At the end of a round the game shows Level cleared or Out of planes. The original sound key still controls gameplay sound. Start with `-q` to start silent.
+
+The Title settings menu previews Classic and Modern artwork and music as you switch them. Plane loss music in the same menu controls a short cue when your plane crashes.

@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: switchable synthesized audio.
 //
@@ -448,6 +449,8 @@ void swsound(void)
 	switch (soundtype) {
 
 	case 0:
+		Speaker_PlaneLoss(false);
+		/* fall through */
 	case 32767:
 	default:
 		soundoff();
@@ -509,6 +512,7 @@ void sound(int type, int parm, OBJECTS *ob)
 {
 	// if we are already playing the title music, ignore
 	if (type == S_TITLE) {
+		Speaker_PlaneLoss(false);
 		Speaker_TitleMusic(true);
 		Speaker_EnhancedFrame(false, 0, false);
 		if (!titleflg) {
