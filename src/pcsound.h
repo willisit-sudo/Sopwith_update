@@ -44,6 +44,6 @@ void Speaker_TitleNote(unsigned short count);
 
 // Called from the game thread.
 void Speaker_EnhancedFrame(bool active, int throttle, bool engine);
-void Speaker_EnhancedEffect(bool impact);
+void Speaker_EnhancedEffect(bool impact, bool enemy);
 
 #endif

@@ -211,6 +211,7 @@ static struct {
 	float engine_target, engine_gain, engine_pitch, pitch_target, phase;
 	float shot, impact, rumble, impact_phase;
 	float turbine_noise, engine_mix, blaster_phase;
+	float enemy_blast, enemy_phase;
 	int engine_theme;
 	uint32_t noise;
 } enhanced = {.noise = 0x7149f6a1u};
@@ -230,7 +231,7 @@ void Speaker_EnhancedFrame(bool active, int throttle, bool engine)
 		enhanced.pitch_target = 105.0f + 31.0f * power;
 		break;
 	case THEME_STAR_WARS:
-		enhanced.pitch_target = 73.0f + 24.0f * power;
+		enhanced.pitch_target = 155.0f + 36.0f * power;
 		break;
 	case THEME_MOON:
 		enhanced.pitch_target = 58.0f + 18.0f * power;
@@ -241,11 +242,12 @@ void Speaker_EnhancedFrame(bool active, int throttle, bool engine)
 	}
 	if (!enhanced.active) {
 		enhanced.engine_gain = enhanced.shot = enhanced.impact = 0;
+		enhanced.enemy_blast = 0;
 	}
 	SDL_UnlockAudioDevice(audio_dev);
 }
 
-void Speaker_EnhancedEffect(bool impact)
+void Speaker_EnhancedEffect(bool impact, bool enemy)
 {
 	if (!sound_initted || !snd_enhanced || !soundflg) {
 		return;
@@ -254,6 +256,9 @@ void Speaker_EnhancedEffect(bool impact)
 	if (impact) {
 		enhanced.impact = 1.0f;
 		enhanced.impact_phase = 0;
+	} else if (enemy && vid_enhanced && enhanced_theme == THEME_STAR_WARS) {
+		enhanced.enemy_blast = 1.0f;
+		enhanced.enemy_phase = 0;
 	} else {
 		enhanced.shot = 1.0f;
 		enhanced.blaster_phase = 0;
@@ -298,10 +303,9 @@ static void MixEnhanced(int16_t *stream, int count)
 			         0.026f * sinf(phase * 7.0f);
 		} else if (enhanced.engine_theme == THEME_STAR_WARS) {
 			engine =
-			    0.09f * sinf(phase) +
-			    0.052f * sinf(phase * 3.0f + 1.5f * sinf(phase)) +
-			    0.036f * sinf(phase * 5.0f) +
-			    0.09f * enhanced.rumble;
+			    0.025f * sinf(phase) + 0.057f * sinf(phase * 2.0f) +
+			    0.026f * sinf(phase * 4.0f + 0.22f * sinf(phase)) +
+			    0.018f * enhanced.rumble;
 		} else if (enhanced.engine_theme == THEME_MOON) {
 			engine =
 			    0.095f * sinf(phase) +
@@ -319,14 +323,29 @@ static void MixEnhanced(int16_t *stream, int count)
 		if (enhanced.engine_theme == THEME_STAR_WARS &&
 		    enhanced.shot > 0.001f) {
 			enhanced.blaster_phase +=
-			    (430.0f + 2100.0f * enhanced.shot) * dt;
+			    (245.0f + 1360.0f * enhanced.shot) * dt;
 			if (enhanced.blaster_phase >= 1.0f)
 				enhanced.blaster_phase -= 1.0f;
 			float zap = 2.0f * M_PI * enhanced.blaster_phase;
-			gun = 0.24f * sinf(zap) + 0.065f * sinf(2.0f * zap) +
-			      0.04f * noise;
+			gun = 0.25f * sinf(zap + 0.8f * sinf(2.0f * zap)) +
+			      0.065f * sinf(2.0f * zap) + 0.04f * noise;
+		}
+		float enemy = 0;
+		if (enhanced.engine_theme == THEME_STAR_WARS &&
+		    enhanced.enemy_blast > 0.001f) {
+			enhanced.enemy_phase +=
+			    (950.0f + 1950.0f * enhanced.enemy_blast) * dt;
+			if (enhanced.enemy_phase >= 1.0f)
+				enhanced.enemy_phase -= 1.0f;
+			float phase = 2.0f * M_PI * enhanced.enemy_phase;
+			enemy =
+			    enhanced.enemy_blast *
+			    (0.16f * sinf(phase + 0.65f * sinf(phase * 3.0f)) +
+			     0.025f * noise);
+			enhanced.enemy_blast *= shot_decay * shot_decay;
 		}
 		sample =
+		    enemy +
 		    enhanced.engine_gain *
 		        (enhanced.engine_theme == THEME_BIPLANE
 		             ? engine
@@ -337,7 +356,8 @@ static void MixEnhanced(int16_t *stream, int count)
 		         0.53f * enhanced.rumble);
 		enhanced.shot *= shot_decay;
 		enhanced.impact *= impact_decay;
-		stream[i] = (int16_t) (sample * 24000.0f);
+		stream[i] =
+		    (int16_t) (fminf(1.0f, fmaxf(-1.0f, sample)) * 24000.0f);
 	}
 }
 

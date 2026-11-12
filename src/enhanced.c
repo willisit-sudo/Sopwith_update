@@ -383,17 +383,32 @@ static uint32_t StarWarsMaterial(int x, int y, bool enemy, int phase)
 		return 0;
 	}
 
-	if (x >= 9 && x <= 43 && dy <= 5 - (x - 9) / 9)
-		return x >= 28 && x <= 33 && y <= 24 ? RGB(50, 91, 110)
-		                                     : RGB(221, 226, 219);
-	if (x >= 12 && x <= 27 && abs(dy - (15 - (x - 12) / 2)) <= 2)
-		return x >= 18 && x <= 21 ? RGB(182, 57, 48)
-		                          : RGB(183, 192, 196);
-	if (x >= 7 && x <= 30 && dy >= 14 && dy <= 15)
-		return RGB(196, 204, 209);
-	if (x >= 5 && x <= 15 && dy >= 6 && dy <= 9)
-		return x <= 7 + phase ? RGB(244, 107, 180) : RGB(130, 144, 156);
-	return 0;
+	// Offset far wings above the body and near wings below it.
+	uint32_t color = 0;
+	int far_upper = 10 + (x - 12) * 2 / 3;
+	int far_lower = 28 - (x - 12) / 3;
+	int near_upper = 16 + (x - 8) / 3;
+	int near_lower = 39 - (x - 8) * 2 / 3;
+	if (x >= 12 && x <= 31 &&
+	    (abs(y - far_upper) <= 2 || abs(y - far_lower) <= 1))
+		color = RGB(118, 134, 151);
+	if (x >= 8 && x <= 30 &&
+	    (abs(y - near_upper) <= 2 || abs(y - near_lower) <= 2))
+		color =
+		    x >= 16 && x <= 20 ? RGB(187, 62, 52) : RGB(206, 213, 215);
+	if (x >= 7 && x <= 23 && (y == 10 || y == 16 || y == 28 || y == 39))
+		color = RGB(167, 181, 192);
+	if (x >= 9 && x <= 44 && dy <= 5 - (x - 9) / 9) {
+		color = y < 24 ? RGB(230, 233, 225) : RGB(153, 169, 179);
+		if (x >= 29 && x <= 35 && y <= 23)
+			color = RGB(57, 99, 124);
+		if (x >= 17 && x <= 29 && y == 25)
+			color = RGB(188, 61, 48);
+	}
+	if (x >= 5 && x <= 14 && ((y >= 17 && y <= 20) || (y >= 29 && y <= 32)))
+		color =
+		    x <= 7 + phase ? RGB(255, 139, 198) : RGB(117, 132, 150);
+	return color;
 }
 
 static uint32_t FlightMaterial(int x, int y, bool enemy, int phase)

@@ -467,7 +467,7 @@ void initshot(OBJECTS *obo, OBJECTS *targ)
 	AdjustBullet(ob, obo);
 
 	insertx(ob, obo);
-	Speaker_EnhancedEffect(false);
+	Speaker_EnhancedEffect(false, obo != consoleplayer);
 }
 
 // bomb
@@ -782,7 +782,7 @@ void initexpl(OBJECTS *obo, int small)
 	oboclr = obo->ob_clr;
 
 	obotype = obo->ob_type;
-	Speaker_EnhancedEffect(true);
+	Speaker_EnhancedEffect(true, false);
 
 	if (IsExplosive(obo)) {
 		ic = 1;
