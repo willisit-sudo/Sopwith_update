@@ -50,7 +50,9 @@ bool snd_loss_cue = true;
 static unsigned int loss_sample;
 static bool loss_playing;
 static bool modern_title_playing;
-static unsigned int music_sample;
+static SDL_atomic_t title_note;
+static int rendered_title_note = -1;
+static float title_phase, title_frequency, title_age, title_gain;
 static bool sound_initted = false;
 static bool speaker_on = false;
 static SDL_AudioDeviceID audio_dev;
@@ -291,38 +293,44 @@ void Speaker_TitleMusic(bool playing)
 	SDL_LockAudioDevice(audio_dev);
 	bool enabled = playing && snd_modern_music && soundflg;
 	if (enabled && !modern_title_playing)
-		music_sample = 0;
+		rendered_title_note = -1;
 	modern_title_playing = enabled;
 	SDL_UnlockAudioDevice(audio_dev);
 }
 
-// Original four-bar title loop, with plucked lead, bass and soft chords.
+// Both title voices use the same sequencer, including custom mission tunes.
+void Speaker_TitleNote(unsigned short count)
+{
+	// Retrigger repeated notes as well as changes in pitch.
+	int retrigger = (SDL_AtomicGet(&title_note) ^ 0x10000) & 0x10000;
+	SDL_AtomicSet(&title_note, retrigger | count);
+}
+
 static void MixTitleMusic(int16_t *stream, int count)
 {
-	static const float melody[] = {
-	    440,     523.25f, 659.25f, 587.33f, 523.25f, 440,     392, 329.63f,
-	    349.23f, 440,     523.25f, 659.25f, 587.33f, 523.25f, 392, 440};
-	static const float bass[] = {110, 82.41f, 87.31f, 98};
-	int beat_samples = output_freq / 4;
-	int i;
-	for (i = 0; i < count; ++i) {
-		unsigned int step = music_sample / beat_samples;
-		float note_time =
-		    (music_sample % beat_samples) / (float) output_freq;
-		float chord_time =
-		    (music_sample % (beat_samples * 4)) / (float) output_freq;
-		float lead = 2.0f * M_PI * melody[step] * note_time;
-		float low = 2.0f * M_PI * bass[step / 4] * chord_time;
-		float attack = fminf(note_time * 200.0f, 1.0f);
-		float chord_attack = fminf(chord_time * 40.0f, 1.0f);
+	int note = SDL_AtomicGet(&title_note);
+	unsigned int divisor = note & 0xffff;
+	float dt = 1.0f / output_freq;
+	if (note != rendered_title_note) {
+		rendered_title_note = note;
+		title_age = 0;
+		if (divisor)
+			title_frequency = TIMER_FREQ / (float) divisor;
+	}
+
+	for (int i = 0; i < count; ++i) {
+		float target =
+		    divisor ? 0.42f + 0.58f * expf(-6.0f * title_age) : 0;
+		title_gain += (target - title_gain) * (200.0f * dt);
+		title_age += dt;
+		title_phase += title_frequency * dt;
+		if (title_phase >= 2.0f)
+			title_phase -= 2.0f;
+		float phase = 2.0f * M_PI * title_phase;
 		float sample =
-		    attack * expf(-11.0f * note_time) *
-		    (0.14f * sinf(lead) + 0.032f * sinf(2.0f * lead));
-		sample += chord_attack * expf(-3.8f * chord_time) *
-		          (0.10f * sinf(low) + 0.032f * sinf(low * 3.0f) +
-		           0.024f * sinf(low * 4.0f));
-		stream[i] = (int16_t) (sample * 23000.0f);
-		music_sample = (music_sample + 1) % (beat_samples * 16);
+		    0.16f * sinf(phase) + 0.042f * sinf(2.0f * phase) +
+		    0.018f * sinf(3.0f * phase) + 0.057f * sinf(0.5f * phase);
+		stream[i] = (int16_t) (sample * title_gain * 24000.0f);
 	}
 }
 

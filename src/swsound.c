@@ -392,6 +392,7 @@ static void titlnote(void)
 	playnote();
 	titlplace = place;
 	titltone = tunefreq;
+	Speaker_TitleNote(titltone);
 	titlticks += tunedura;
 	titloctv = octavefactor;
 	soundoff();

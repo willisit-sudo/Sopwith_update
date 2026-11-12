@@ -50,3 +50,5 @@ The replacement biplane is drawn procedurally in its original flight poses; dama
 Press **S** for ground targets only or **C** for ground targets and enemy planes. At the end of a round the game shows Level cleared or Out of planes. The original sound key still controls gameplay sound. Start with `-q` to start silent.
 
 The Title settings menu previews Classic and Modern artwork and music as you switch them. Plane loss music in the same menu controls a short cue when your plane crashes.
+
+Modern title music uses the same score as Classic with a layered synth voice. The stock tune is “The U.S. Air Force” (Wild Blue Yonder). Custom mission title tunes also play through either voice.

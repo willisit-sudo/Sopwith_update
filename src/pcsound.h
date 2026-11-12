@@ -40,6 +40,7 @@ extern bool snd_modern_music;
 extern bool snd_loss_cue;
 void Speaker_PlaneLoss(bool playing);
 void Speaker_TitleMusic(bool playing);
+void Speaker_TitleNote(unsigned short count);
 
 // Called from the game thread.
 void Speaker_EnhancedFrame(bool active, int throttle, bool engine);
