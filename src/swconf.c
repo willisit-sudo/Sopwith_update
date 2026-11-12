@@ -1,3 +1,4 @@
+// Modified 2026-11-12: keep Options entries clear of the Escape hint.
 // Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 // Modified 2026-11-10 for Sopwith Update: display scaling preferences.
@@ -286,32 +287,31 @@ static const struct menuitem keys_menu_items[] = {
 
 static const struct menu keys_menu = {
     FullscreenBackground,
-    "OPTIONS",
+    "KEY BINDINGS",
     keys_menu_items,
 };
 
 static const struct menuitem options_menu_items[] = {
+    {'K', "Key bindings >>>", SubMenu, &keys_menu},
 #ifndef NO_FULLSCREEN
     CONFIG_OPTION("Run fullscreen", "vid_fullscreen"),
 #endif
-    CONFIG_OPTION("Enhanced audio (F10)", "snd_enhanced"),
-    CONFIG_OPTION("Enhanced graphics (F9)", "vid_enhanced"),
-    CONFIG_OPTION("Crisp pixel scaling (F8)", "vid_integer_scaling"),
+    CONFIG_OPTION("Enhanced audio", "snd_enhanced"),
+    CONFIG_OPTION("Enhanced graphics", "vid_enhanced"),
+    CONFIG_OPTION("Crisp pixel scaling", "vid_integer_scaling"),
     CONFIG_OPTION("Video palette", "conf_video_palette"),
     CONFIG_OPTION("Solid ground", "conf_solidground"),
     CONFIG_OPTION("HUD splats", "conf_hudsplats"),
     CONFIG_OPTION("Wounded planes", "conf_wounded"),
     CONFIG_OPTION("Oxen and birds", "conf_animals"),
-    CONFIG_OPTION("Big oil tank explosions", "conf_big_explosions"),
+    CONFIG_OPTION("Big tank explosions", "conf_big_explosions"),
     CONFIG_OPTION("Medals", "conf_medals"),
     CONFIG_OPTION("Harry keys mode", "conf_harrykeys"),
-    {0, ""},
-    {'K', "Key bindings >>>", SubMenu, &keys_menu},
     {0, NULL},
 };
 
 const struct menu options_menu = {
     FullscreenBackground,
-    "OPTIONS > KEY BINDINGS",
+    "OPTIONS",
     options_menu_items,
 };
