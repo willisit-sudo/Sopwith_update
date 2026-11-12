@@ -93,6 +93,25 @@ static void CheckEnhanced(void)
 		                 &edge, countmove);
 		Enhanced_Render(second, ENHANCED_WIDTH);
 	}
+	for (int theme = THEME_MODERN_DAY; theme < THEME_COUNT; ++theme) {
+		OBJECTS wreck = *consoleplayer;
+		OBJECTS debris = wreck;
+		wreck.ob_state = CRASHED;
+		wreck.ob_next = &debris;
+		debris.ob_type = EXPLOSION;
+		debris.ob_life = 3;
+		debris.ob_x += 18;
+		debris.ob_next = NULL;
+		Enhanced_Capture(vid_vram, vid_pitch, displx, ground + displx,
+		                 &wreck, countmove);
+		enhanced_theme = theme;
+		Enhanced_Render(second, ENHANCED_WIDTH);
+		Enhanced_Render(first, ENHANCED_WIDTH);
+		assert(memcmp(first, second,
+		              sizeof(*first) * ENHANCED_WIDTH *
+		                  ENHANCED_HEIGHT) == 0);
+	}
+	enhanced_theme = THEME_BIPLANE;
 	// Restore the captured scene, not the simulation.
 	Enhanced_Capture(classic, SCR_WDTH, displx, ground + displx, objtop,
 	                 countmove);

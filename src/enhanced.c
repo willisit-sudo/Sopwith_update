@@ -20,7 +20,7 @@ static struct {
 	GRNDTYPE terrain[SCR_WDTH];
 	uint8_t ui[SCR_WDTH * SCR_HGHT];
 	struct {
-		int x, y, angle, inverted, color;
+		int x, y, angle, inverted, color, life;
 		obtype_t type;
 		obstate_t state;
 		const sopsym_t *symbol;
@@ -80,6 +80,7 @@ void Enhanced_Capture(const uint8_t *ui, unsigned int pitch, int camera,
 		frame.objects[n].inverted = ob->ob_orient;
 		frame.objects[n].color = ob->ob_clr;
 		frame.objects[n].type = ob->ob_type;
+		frame.objects[n].life = ob->ob_life;
 		frame.objects[n].state = ob->ob_state;
 		frame.objects[n++].symbol = ob->ob_symbol;
 	}
@@ -331,15 +332,44 @@ static uint32_t PlaneMaterial(int x, int y, bool enemy, int phase)
 }
 
 // Side-on silhouettes share the biplane's visual anchor and rotation.
+static uint32_t JetMaterial(int x, int y, bool enemy)
+{
+	uint32_t trim = enemy ? RGB(188, 79, 63) : RGB(82, 152, 165);
+	uint32_t color = 0;
+	// Swept single tail, horizontal stabilizer and broad wing root.
+	if (y >= 13 && y <= 24 && x >= 10 && x <= 13 + (y - 13) / 2)
+		color = y < 17 ? trim : RGB(150, 164, 171);
+	if (y >= 25 && y <= 28 && x >= 7 && x <= 16)
+		color = RGB(129, 145, 151);
+	if (y >= 25 && y <= 32 && x >= 16 && x <= 30 - (y - 25))
+		color = y > 28 ? RGB(110, 126, 134) : RGB(183, 192, 194);
+	// Single exhaust, level spine and long radome.
+	if (x >= 7 && x <= 13 && y >= 22 && y <= 26)
+		color = x < 10 ? RGB(62, 67, 70) : RGB(121, 132, 138);
+	if (x >= 12 && x <= 35 && y >= 21 && y <= 27)
+		color = y < 24 ? RGB(208, 215, 213) : RGB(151, 163, 168);
+	if (x >= 35 && x <= 45 && abs(y - 24) <= (45 - x) / 3)
+		color = RGB(177, 188, 192);
+	// Raised bubble canopy and shaded chin intake.
+	if (x >= 26 && x <= 34 && y >= 18 + abs(x - 30) / 3 && y <= 21)
+		color = y == 19 ? RGB(154, 196, 208) : RGB(57, 96, 117);
+	if (x >= 25 && x <= 33 && y >= 26 && y <= 28)
+		color = y == 28 ? RGB(95, 113, 121) : RGB(57, 72, 80);
+	if (x >= 18 && x <= 20 && y == 23)
+		color = trim;
+	return color;
+}
+
 static uint32_t FlightMaterial(int x, int y, bool enemy, int phase)
 {
 	if (enhanced_theme == THEME_BIPLANE)
 		return PlaneMaterial(x, y, enemy, phase);
+	if (enhanced_theme == THEME_MODERN_DAY)
+		return JetMaterial(x, y, enemy);
 
-	bool moon = enhanced_theme == THEME_MOON;
 	int height = abs(y - 24);
 	uint32_t trim = enemy ? RGB(224, 87, 69) : RGB(79, 206, 222);
-	if (moon && x >= 3 && x < 10 && height <= (phase ? 3 : 2))
+	if (x >= 3 && x < 10 && height <= (phase ? 3 : 2))
 		return x < 6 ? RGB(91, 135, 250) : RGB(192, 240, 255);
 	if (x >= 9 && x <= 43 && height <= (43 - x) / 5 + 1) {
 		if (x >= 26 && x <= 33 && y >= 20 && y <= 23)
@@ -348,16 +378,8 @@ static uint32_t FlightMaterial(int x, int y, bool enemy, int phase)
 			return trim;
 		return y < 24 ? RGB(218, 226, 224) : RGB(118, 141, 150);
 	}
-	if (moon) {
-		if (x >= 8 && x <= 31 && height >= 5 &&
-		    height <= (34 - x) / 3 + 3)
-			return height >= 9 ? trim : RGB(166, 182, 198);
-	} else {
-		if (x >= 9 && x <= 17 && y >= 13 && y <= 22 && x <= y - 3)
-			return x < 12 ? trim : RGB(168, 185, 196);
-		if (x >= 15 && x <= 31 && y >= 25 && y <= 32 && x + y <= 58)
-			return y > 29 ? RGB(103, 126, 141) : RGB(190, 202, 210);
-	}
+	if (x >= 8 && x <= 31 && height >= 5 && height <= (34 - x) / 3 + 3)
+		return height >= 9 ? trim : RGB(166, 182, 198);
 	return 0;
 }
 
@@ -366,7 +388,15 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 	int x, y, angle = (frame.objects[n].angle % ANGLES + ANGLES) % ANGLES;
 	int c = COS(angle), s = SIN(angle);
 	bool enemy = frame.objects[n].color != FACTION_PLAYER1;
+	bool wreck = enhanced_theme != THEME_BIPLANE &&
+	             frame.objects[n].state == CRASHED;
+	bool damaged = enhanced_theme != THEME_BIPLANE &&
+	               (wreck || frame.objects[n].state == FALLING ||
+	                frame.objects[n].state == WOUNDED ||
+	                frame.objects[n].state == WOUNDSTALL);
 	uint32_t sprite[48][48];
+	int width = frame.objects[n].symbol->w * S;
+	int height = frame.objects[n].symbol->h * S;
 	for (y = 0; y < 48; ++y) {
 		for (x = 0; x < 48; ++x) {
 			int dx = x - 24, dy = y - 24;
@@ -374,17 +404,28 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 			int sy = 24 + (dx * s + dy * c) / 256;
 			if (frame.objects[n].inverted)
 				sy = 47 - sy;
-			sprite[y][x] =
+			uint32_t material =
 			    FlightMaterial(sx, sy, enemy, frame.tick & 1);
+			if (wreck && (sx > 34 || (sx > 20 && sy < 24)))
+				material = 0;
+			if (material && damaged)
+				material =
+				    (sx + sy + frame.tick) % 13 == 0
+				        ? (enhanced_theme == THEME_MOON
+				               ? RGB(138, 225, 255)
+				               : RGB(255, 150, 67))
+				        : Shade(material, wreck ? -60 : -28);
+			sprite[y][x] = material;
 		}
 	}
-	for (y = 0; y < 48; ++y) {
-		for (x = 0; x < 48; ++x) {
-			uint32_t color = sprite[y][x];
-			if (!color && ((x > 0 && sprite[y][x - 1]) ||
-			               (x < 47 && sprite[y][x + 1]) ||
-			               (y > 0 && sprite[y - 1][x]) ||
-			               (y < 47 && sprite[y + 1][x]))) {
+	for (y = 0; y < height; ++y) {
+		for (x = 0; x < width; ++x) {
+			int sx = x * 48 / width, sy = y * 48 / height;
+			uint32_t color = sprite[sy][sx];
+			if (!color && ((sx > 0 && sprite[sy][sx - 1]) ||
+			               (sx < 47 && sprite[sy][sx + 1]) ||
+			               (sy > 0 && sprite[sy - 1][sx]) ||
+			               (sy < 47 && sprite[sy + 1][sx]))) {
 				color = RGB(32, 42, 47);
 			}
 			if (color != 0)
@@ -413,7 +454,11 @@ static void ThemedTarget(uint32_t *p, unsigned int pitch, int n)
 		for (x = 0; x < width; ++x) {
 			int u = x * 48 / width;
 			uint32_t color = 0;
-			if (vehicle) {
+			if (frame.objects[n].state != STANDING) {
+				int rubble = 34 + (u / 6 * 7) % 10;
+				if (u >= 5 && u <= 43 && v >= rubble && v <= 46)
+					color = v == rubble ? roof : edge;
+			} else if (vehicle) {
 				if (v >= 35 && u >= 4 && u <= 44)
 					color =
 					    v >= 43 || u % 8 == 0 ? edge : wall;
@@ -447,6 +492,25 @@ static void ThemedTarget(uint32_t *p, unsigned int pitch, int n)
 	}
 }
 
+static void ThemedDebris(uint32_t *p, unsigned int pitch, int n)
+{
+	const sopsym_t *sym = frame.objects[n].symbol;
+	bool moon = enhanced_theme == THEME_MOON;
+	int cx = frame.objects[n].x * S + sym->w * S / 2;
+	int cy = frame.objects[n].y * S + sym->h * S / 2;
+	int radius = 2 + clamp_range(0, frame.objects[n].life, 5);
+	int angle = (frame.objects[n].inverted * 2 + frame.tick) & 15;
+	int dx = COS(angle), dy = SIN(angle);
+	for (int step = -radius; step <= radius; ++step) {
+		int x = cx + dx * step / 256;
+		int y = cy + dy * step / 256;
+		uint32_t color = moon ? RGB(116, 171, 245) : RGB(211, 103, 52);
+		Pixel(p, pitch, x, y, color);
+		Pixel(p, pitch, x, y + 1, color);
+	}
+	Pixel(p, pitch, cx, cy, moon ? RGB(217, 247, 255) : RGB(255, 226, 160));
+}
+
 // Retain each current symbol's silhouette and pose. Subpixel materials are
 // presentation-only; no collision data or symbol dimensions are replaced.
 static void Object(uint32_t *p, unsigned int pitch, int n)
@@ -457,6 +521,14 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 	bool player_color = frame.objects[n].color == FACTION_PLAYER1;
 	uint32_t body = player_color ? RGB(183, 153, 86) : RGB(161, 72, 59);
 	uint32_t wing = player_color ? RGB(222, 206, 151) : RGB(214, 153, 111);
+	if (enhanced_theme != THEME_BIPLANE && type == EXPLOSION) {
+		ThemedDebris(p, pitch, n);
+		return;
+	}
+	if (type == PLANE && enhanced_theme != THEME_BIPLANE) {
+		Plane(p, pitch, n);
+		return;
+	}
 	if (type == PLANE &&
 	    (frame.objects[n].state == FLYING ||
 	     frame.objects[n].state == WOUNDED ||
@@ -471,8 +543,7 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 		ThemedTarget(p, pitch, n);
 		return;
 	}
-	if (enhanced_theme != THEME_BIPLANE && type == TARGET &&
-	    frame.objects[n].state == STANDING && sym->w == 16 &&
+	if (enhanced_theme != THEME_BIPLANE && type == TARGET && sym->w == 16 &&
 	    sym->h == 16 && frame.objects[n].inverted <= TARGET_TANKER_TRUCK) {
 		ThemedTarget(p, pitch, n);
 		return;
@@ -497,7 +568,9 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 				color = ink == 1 ? RGB(245, 127, 47)
 				                 : RGB(255, 222, 121);
 			else if (type == SMOKE)
-				color = RGB(123, 132, 127);
+				color = enhanced_theme == THEME_MOON
+				          ? RGB(127, 157, 195)
+				          : RGB(123, 132, 127);
 			else if (type == OX)
 				color = ink == 3 ? RGB(237, 225, 193)
 				                 : RGB(94, 72, 55);

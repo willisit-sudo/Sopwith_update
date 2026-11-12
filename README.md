@@ -56,3 +56,5 @@ Modern title music uses the same score as Classic with a layered synth voice. Th
 Menu artwork applies to the splash, Options and Key bindings. Title music uses the same original melody in either voice.
 
 In Options, Flight artwork cycles through Classic, Biplane, Modern Day and Moon. F9 switches between Classic and the last enhanced theme. The artwork uses the existing game state and collision masks. Modern Day depicts jets, vehicles and facilities under fluffy clouds. Moon depicts starfighters and lunar bases.
+
+Modern Day and Moon have distinct aircraft wrecks, debris and engine voices. Enable Enhanced audio (F10) to hear the throttle-responsive turbine or spacecraft engine. Gunfire uses the same mix across themes.

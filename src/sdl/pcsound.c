@@ -19,9 +19,11 @@
 #include <inttypes.h>
 #include <math.h>
 
+#include "enhanced.h"
 #include "sw.h"
 #include "swmain.h"
 #include "swsound.h"
+#include "video.h"
 
 #define VOLUME            4000 /* out of 1 << 15 */
 #define FILTER_KERNEL_LEN 51
@@ -208,6 +210,8 @@ static struct {
 	bool active;
 	float engine_target, engine_gain, engine_pitch, pitch_target, phase;
 	float shot, impact, rumble, impact_phase;
+	float turbine_noise, engine_mix;
+	int engine_theme;
 	uint32_t noise;
 } enhanced = {.noise = 0x7149f6a1u};
 
@@ -219,8 +223,19 @@ void Speaker_EnhancedFrame(bool active, int throttle, bool engine)
 	SDL_LockAudioDevice(audio_dev);
 	enhanced.active = snd_enhanced && active;
 	enhanced.engine_target = engine ? 1.0f : 0.0f;
-	enhanced.pitch_target =
-	    48.0f + 13.0f * clamp_range(0, throttle, MAX_THROTTLE);
+	enhanced.engine_theme = vid_enhanced ? enhanced_theme : THEME_BIPLANE;
+	float power = clamp_range(0, throttle, MAX_THROTTLE);
+	switch (enhanced.engine_theme) {
+	case THEME_MODERN_DAY:
+		enhanced.pitch_target = 105.0f + 31.0f * power;
+		break;
+	case THEME_MOON:
+		enhanced.pitch_target = 58.0f + 18.0f * power;
+		break;
+	default:
+		enhanced.pitch_target = 48.0f + 13.0f * power;
+		break;
+	}
 	if (!enhanced.active) {
 		enhanced.engine_gain = enhanced.shot = enhanced.impact = 0;
 	}
@@ -250,7 +265,7 @@ static void MixEnhanced(int16_t *stream, int count)
 	int i;
 
 	for (i = 0; i < count; ++i) {
-		float noise, rotor, sample;
+		float noise, rotor, sample, engine;
 		enhanced.noise ^= enhanced.noise << 13;
 		enhanced.noise ^= enhanced.noise >> 17;
 		enhanced.noise ^= enhanced.noise << 5;
@@ -269,13 +284,32 @@ static void MixEnhanced(int16_t *stream, int count)
 		rotor = sinf(2.0f * M_PI * enhanced.phase) +
 		        0.43f * sinf(4.0f * M_PI * enhanced.phase) +
 		        0.20f * sinf(10.0f * M_PI * enhanced.phase);
+		float phase = 2.0f * M_PI * enhanced.phase;
+		engine = 0.09f * rotor + 0.08f * enhanced.rumble;
+		if (enhanced.engine_theme == THEME_MODERN_DAY) {
+			enhanced.turbine_noise +=
+			    (noise - enhanced.turbine_noise) * (3600.0f * dt);
+			engine = 0.29f * enhanced.turbine_noise +
+			         0.045f * sinf(phase * 3.0f) +
+			         0.026f * sinf(phase * 7.0f);
+		} else if (enhanced.engine_theme == THEME_MOON) {
+			engine =
+			    0.095f * sinf(phase) +
+			    0.053f * sinf(phase * 2.0f + sinf(phase * 3.0f)) +
+			    0.022f * sinf(phase * 5.0f) +
+			    0.035f * enhanced.rumble;
+		}
+		enhanced.engine_mix +=
+		    (engine - enhanced.engine_mix) * (9500.0f * dt);
 		enhanced.impact_phase += (38.0f + 53.0f * enhanced.impact) * dt;
 		if (enhanced.impact_phase >= 1.0f) {
 			enhanced.impact_phase -= 1.0f;
 		}
 		sample =
 		    enhanced.engine_gain *
-		        (0.09f * rotor + 0.08f * enhanced.rumble) +
+		        (enhanced.engine_theme == THEME_BIPLANE
+		             ? engine
+		             : enhanced.engine_mix) +
 		    enhanced.shot * (0.23f * noise + 0.11f * enhanced.rumble) +
 		    enhanced.impact *
 		        (0.21f * sinf(2.0f * M_PI * enhanced.impact_phase) +
