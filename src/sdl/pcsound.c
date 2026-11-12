@@ -210,7 +210,7 @@ static struct {
 	bool active;
 	float engine_target, engine_gain, engine_pitch, pitch_target, phase;
 	float shot, impact, rumble, impact_phase;
-	float turbine_noise, engine_mix;
+	float turbine_noise, engine_mix, blaster_phase;
 	int engine_theme;
 	uint32_t noise;
 } enhanced = {.noise = 0x7149f6a1u};
@@ -228,6 +228,9 @@ void Speaker_EnhancedFrame(bool active, int throttle, bool engine)
 	switch (enhanced.engine_theme) {
 	case THEME_MODERN_DAY:
 		enhanced.pitch_target = 105.0f + 31.0f * power;
+		break;
+	case THEME_STAR_WARS:
+		enhanced.pitch_target = 73.0f + 24.0f * power;
 		break;
 	case THEME_MOON:
 		enhanced.pitch_target = 58.0f + 18.0f * power;
@@ -253,6 +256,7 @@ void Speaker_EnhancedEffect(bool impact)
 		enhanced.impact_phase = 0;
 	} else {
 		enhanced.shot = 1.0f;
+		enhanced.blaster_phase = 0;
 	}
 	SDL_UnlockAudioDevice(audio_dev);
 }
@@ -292,6 +296,12 @@ static void MixEnhanced(int16_t *stream, int count)
 			engine = 0.29f * enhanced.turbine_noise +
 			         0.045f * sinf(phase * 3.0f) +
 			         0.026f * sinf(phase * 7.0f);
+		} else if (enhanced.engine_theme == THEME_STAR_WARS) {
+			engine =
+			    0.09f * sinf(phase) +
+			    0.052f * sinf(phase * 3.0f + 1.5f * sinf(phase)) +
+			    0.036f * sinf(phase * 5.0f) +
+			    0.09f * enhanced.rumble;
 		} else if (enhanced.engine_theme == THEME_MOON) {
 			engine =
 			    0.095f * sinf(phase) +
@@ -305,12 +315,23 @@ static void MixEnhanced(int16_t *stream, int count)
 		if (enhanced.impact_phase >= 1.0f) {
 			enhanced.impact_phase -= 1.0f;
 		}
+		float gun = 0.23f * noise + 0.11f * enhanced.rumble;
+		if (enhanced.engine_theme == THEME_STAR_WARS &&
+		    enhanced.shot > 0.001f) {
+			enhanced.blaster_phase +=
+			    (430.0f + 2100.0f * enhanced.shot) * dt;
+			if (enhanced.blaster_phase >= 1.0f)
+				enhanced.blaster_phase -= 1.0f;
+			float zap = 2.0f * M_PI * enhanced.blaster_phase;
+			gun = 0.24f * sinf(zap) + 0.065f * sinf(2.0f * zap) +
+			      0.04f * noise;
+		}
 		sample =
 		    enhanced.engine_gain *
 		        (enhanced.engine_theme == THEME_BIPLANE
 		             ? engine
 		             : enhanced.engine_mix) +
-		    enhanced.shot * (0.23f * noise + 0.11f * enhanced.rumble) +
+		    enhanced.shot * gun +
 		    enhanced.impact *
 		        (0.21f * sinf(2.0f * M_PI * enhanced.impact_phase) +
 		         0.53f * enhanced.rumble);

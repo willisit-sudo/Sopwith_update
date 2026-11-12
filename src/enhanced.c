@@ -34,6 +34,8 @@ const char *Enhanced_ThemeName(void)
 	switch (enhanced_theme) {
 	case THEME_MODERN_DAY:
 		return "Modern Day";
+	case THEME_STAR_WARS:
+		return "Star Wars";
 	case THEME_MOON:
 		return "Moon";
 	default:
@@ -116,7 +118,8 @@ static void ThemeSky(uint32_t *p, unsigned int pitch)
 		for (x = 0; x < W; ++x) {
 			uint32_t color = RGB(18, 29, 38);
 			if (y < (SCR_HGHT - HUD) * S) {
-				if (enhanced_theme == THEME_MOON) {
+				if (enhanced_theme == THEME_MOON ||
+				    enhanced_theme == THEME_STAR_WARS) {
 					int dx = x - 742, dy = y - 133;
 					int distance = dx * dx + dy * dy;
 					unsigned int star = Noise(x / 2, y / 2);
@@ -236,7 +239,8 @@ static void Terrain(uint32_t *p, unsigned int pitch)
 			else
 				c = (noise % 19 == 0) ? RGB(99, 80, 58)
 				                      : RGB(85, 70, 53);
-			if (enhanced_theme == THEME_MOON) {
+			if (enhanced_theme == THEME_MOON ||
+			    enhanced_theme == THEME_STAR_WARS) {
 				int gray =
 				    depth < 3 ? 177 : (depth < 13 ? 120 : 83);
 				gray += (int) (noise % 13);
@@ -360,8 +364,42 @@ static uint32_t JetMaterial(int x, int y, bool enemy)
 	return color;
 }
 
+static uint32_t StarWarsMaterial(int x, int y, bool enemy, int phase)
+{
+	int dy = abs(y - 24);
+	if (enemy) {
+		int distance = (x - 25) * (x - 25) + (y - 24) * (y - 24);
+		if (distance <= 65)
+			return distance < 22 ? RGB(35, 49, 58)
+			                     : RGB(151, 162, 170);
+		if ((x >= 7 && x <= 12) || (x >= 36 && x <= 41)) {
+			if (dy <= 15 && dy <= 11 + (x % 7))
+				return (y % 7 == 0 || x == 8 || x == 39)
+				         ? RGB(164, 177, 190)
+				         : RGB(61, 72, 89);
+		}
+		if (x >= 12 && x <= 36 && dy <= 2)
+			return RGB(125, 143, 156);
+		return 0;
+	}
+
+	if (x >= 9 && x <= 43 && dy <= 5 - (x - 9) / 9)
+		return x >= 28 && x <= 33 && y <= 24 ? RGB(50, 91, 110)
+		                                     : RGB(221, 226, 219);
+	if (x >= 12 && x <= 27 && abs(dy - (15 - (x - 12) / 2)) <= 2)
+		return x >= 18 && x <= 21 ? RGB(182, 57, 48)
+		                          : RGB(183, 192, 196);
+	if (x >= 7 && x <= 30 && dy >= 14 && dy <= 15)
+		return RGB(196, 204, 209);
+	if (x >= 5 && x <= 15 && dy >= 6 && dy <= 9)
+		return x <= 7 + phase ? RGB(244, 107, 180) : RGB(130, 144, 156);
+	return 0;
+}
+
 static uint32_t FlightMaterial(int x, int y, bool enemy, int phase)
 {
+	if (enhanced_theme == THEME_STAR_WARS)
+		return StarWarsMaterial(x, y, enemy, phase);
 	if (enhanced_theme == THEME_BIPLANE)
 		return PlaneMaterial(x, y, enemy, phase);
 	if (enhanced_theme == THEME_MODERN_DAY)
@@ -411,7 +449,8 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 			if (material && damaged)
 				material =
 				    (sx + sy + frame.tick) % 13 == 0
-				        ? (enhanced_theme == THEME_MOON
+				        ? ((enhanced_theme == THEME_MOON ||
+				            enhanced_theme == THEME_STAR_WARS)
 				               ? RGB(138, 225, 255)
 				               : RGB(255, 150, 67))
 				        : Shade(material, wreck ? -60 : -28);
@@ -440,7 +479,8 @@ static void ThemedTarget(uint32_t *p, unsigned int pitch, int n)
 	const sopsym_t *sym = frame.objects[n].symbol;
 	int width = sym->w * S, height = sym->h * S;
 	int kind = frame.objects[n].inverted;
-	bool moon = enhanced_theme == THEME_MOON;
+	bool moon =
+	    (enhanced_theme == THEME_MOON || enhanced_theme == THEME_STAR_WARS);
 	bool vehicle = frame.objects[n].type == OX || kind == TARGET_TANK ||
 	               kind == TARGET_TRUCK || kind == TARGET_TANKER_TRUCK;
 	bool fuel = kind == TARGET_OIL_TANK;
@@ -495,7 +535,8 @@ static void ThemedTarget(uint32_t *p, unsigned int pitch, int n)
 static void ThemedDebris(uint32_t *p, unsigned int pitch, int n)
 {
 	const sopsym_t *sym = frame.objects[n].symbol;
-	bool moon = enhanced_theme == THEME_MOON;
+	bool moon =
+	    (enhanced_theme == THEME_MOON || enhanced_theme == THEME_STAR_WARS);
 	int cx = frame.objects[n].x * S + sym->w * S / 2;
 	int cy = frame.objects[n].y * S + sym->h * S / 2;
 	int radius = 2 + clamp_range(0, frame.objects[n].life, 5);
@@ -521,6 +562,15 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 	bool player_color = frame.objects[n].color == FACTION_PLAYER1;
 	uint32_t body = player_color ? RGB(183, 153, 86) : RGB(161, 72, 59);
 	uint32_t wing = player_color ? RGB(222, 206, 151) : RGB(214, 153, 111);
+	if (enhanced_theme == THEME_STAR_WARS && type == SHOT) {
+		uint32_t bolt =
+		    player_color ? RGB(255, 83, 67) : RGB(110, 255, 119);
+		int px = frame.objects[n].x * S, py = frame.objects[n].y * S;
+		for (int i = -2; i <= 4; ++i)
+			Pixel(p, pitch, px + i, py + 1, bolt);
+		Pixel(p, pitch, px, py + 1, RGB(255, 245, 222));
+		return;
+	}
 	if (enhanced_theme != THEME_BIPLANE && type == EXPLOSION) {
 		ThemedDebris(p, pitch, n);
 		return;
@@ -538,8 +588,9 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 		Plane(p, pitch, n);
 		return;
 	}
-	if (enhanced_theme == THEME_MOON && type == OX &&
-	    frame.objects[n].state == STANDING) {
+	if ((enhanced_theme == THEME_MOON ||
+	     enhanced_theme == THEME_STAR_WARS) &&
+	    type == OX && frame.objects[n].state == STANDING) {
 		ThemedTarget(p, pitch, n);
 		return;
 	}
@@ -568,7 +619,8 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 				color = ink == 1 ? RGB(245, 127, 47)
 				                 : RGB(255, 222, 121);
 			else if (type == SMOKE)
-				color = enhanced_theme == THEME_MOON
+				color = (enhanced_theme == THEME_MOON ||
+				         enhanced_theme == THEME_STAR_WARS)
 				          ? RGB(127, 157, 195)
 				          : RGB(123, 132, 127);
 			else if (type == OX)

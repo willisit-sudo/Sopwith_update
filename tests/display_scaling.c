@@ -156,7 +156,7 @@ static void CheckEnhanced(void)
 	assert(vid_enhanced);
 	vid_enhanced = false;
 	swloadconf();
-	assert(vid_enhanced && enhanced_theme == THEME_MOON);
+	assert(vid_enhanced && enhanced_theme == THEME_STAR_WARS);
 	assert(countmove == moves && gamenum == level && displx == camera &&
 	       explseed == seed);
 	for (i = 0; i < n; ++i)

@@ -20,6 +20,7 @@ enum flight_theme {
 	THEME_BIPLANE,
 	THEME_MODERN_DAY,
 	THEME_MOON,
+	THEME_STAR_WARS,
 	THEME_COUNT
 };
 extern int enhanced_theme;

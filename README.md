@@ -58,3 +58,5 @@ Menu artwork applies to the splash, Options and Key bindings. Title music uses t
 In Options, Flight artwork cycles through Classic, Biplane, Modern Day and Moon. F9 switches between Classic and the last enhanced theme. The artwork uses the existing game state and collision masks. Modern Day depicts jets, vehicles and facilities under fluffy clouds. Moon depicts starfighters and lunar bases.
 
 Modern Day and Moon have distinct aircraft wrecks, debris and engine voices. Enable Enhanced audio (F10) to hear the throttle-responsive turbine or spacecraft engine. Gunfire uses the same mix across themes.
+
+Flight artwork also includes a Star Wars theme with X-wing and TIE silhouettes. Enhanced audio adds a synthesized drive and blaster effect for that theme.
