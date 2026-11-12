@@ -1,3 +1,4 @@
+// Modified 2026-11-12: improve sprite contrast during flight.
 // Copyright (C) 2026 Sopwith Update contributors
 // SPDX-License-Identifier: GPL-2.0-or-later
 // First presentation prototype: deterministic, read-only world rendering.
@@ -111,7 +112,7 @@ static void Background(uint32_t *p, unsigned int pitch)
 		int top = cloud_y - (q > 40 && q < 105 ? 11 : 0);
 		if (q > 10 && q < 155) {
 			for (y = top; y < cloud_y + 10; ++y)
-				Pixel(p, pitch, x, y, RGB(206, 224, 219));
+				Pixel(p, pitch, x, y, RGB(181, 207, 207));
 		}
 	}
 	// Two restrained hill layers; parallax changes visuals only.
@@ -147,10 +148,10 @@ static void Terrain(uint32_t *p, unsigned int pitch)
 			else if (depth < 15)
 				c = RGB(75, 75, 46);
 			else if (depth < 60)
-				c = (noise % 13 == 0) ? RGB(143, 111, 72)
+				c = (noise % 13 == 0) ? RGB(124, 98, 67)
 				                      : RGB(110, 86, 58);
 			else
-				c = (noise % 19 == 0) ? RGB(115, 92, 66)
+				c = (noise % 19 == 0) ? RGB(99, 80, 58)
 				                      : RGB(85, 70, 53);
 			Pixel(p, pitch, x, y, c);
 		}
@@ -175,8 +176,8 @@ static uint32_t Shade(uint32_t c, int delta)
 static uint32_t PlaneMaterial(int x, int y, bool enemy, int phase)
 {
 	uint32_t c = 0, outline = RGB(44, 43, 36);
-	uint32_t linen = enemy ? RGB(215, 142, 103) : RGB(233, 216, 166);
-	uint32_t paint = enemy ? RGB(155, 57, 49) : RGB(153, 131, 65);
+	uint32_t linen = enemy ? RGB(241, 164, 124) : RGB(208, 234, 221);
+	uint32_t paint = enemy ? RGB(181, 65, 55) : RGB(40, 130, 128);
 	// Tail and upper wing, with a one-pixel ink border.
 	if (x >= 4 && x <= 10 && y >= 14 && y <= 27)
 		c = outline;
@@ -213,7 +214,7 @@ static uint32_t PlaneMaterial(int x, int y, bool enemy, int phase)
 	if (x >= 39 && x <= 41 && y >= 24 && y <= 28)
 		c = RGB(179, 184, 173);
 	if (x == 43 && y >= (phase ? 19 : 22) && y <= (phase ? 33 : 30))
-		c = RGB(100, 75, 49);
+		c = RGB(55, 43, 32);
 	if ((x == 25 || x == 33) && y >= 33 && y <= 35)
 		c = outline;
 	if ((x >= 24 && x <= 27 || x >= 32 && x <= 35) && y >= 35 && y <= 37)
@@ -240,15 +241,27 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 	int x, y, angle = (frame.objects[n].angle % ANGLES + ANGLES) % ANGLES;
 	int c = COS(angle), s = SIN(angle);
 	bool enemy = frame.objects[n].color != FACTION_PLAYER1;
+	uint32_t sprite[48][48];
 	for (y = 0; y < 48; ++y) {
 		for (x = 0; x < 48; ++x) {
 			int dx = x - 24, dy = y - 24;
 			int sx = 24 + (dx * c - dy * s) / 256;
 			int sy = 24 + (dx * s + dy * c) / 256;
-			uint32_t color;
 			if (frame.objects[n].inverted)
 				sy = 47 - sy;
-			color = PlaneMaterial(sx, sy, enemy, frame.tick & 1);
+			sprite[y][x] =
+			    PlaneMaterial(sx, sy, enemy, frame.tick & 1);
+		}
+	}
+	for (y = 0; y < 48; ++y) {
+		for (x = 0; x < 48; ++x) {
+			uint32_t color = sprite[y][x];
+			if (!color && ((x > 0 && sprite[y][x - 1]) ||
+			               (x < 47 && sprite[y][x + 1]) ||
+			               (y > 0 && sprite[y - 1][x]) ||
+			               (y < 47 && sprite[y + 1][x]))) {
+				color = RGB(32, 42, 47);
+			}
 			if (color != 0)
 				Pixel(p, pitch, frame.objects[n].x * S + x,
 				      frame.objects[n].y * S + y, color);
@@ -288,9 +301,9 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 				                      : RGB(242, 229, 190));
 			else if (type == TARGET || type == BALLOON)
 				color = ink == 1
-				          ? RGB(161, 117, 80)
-				          : (ink == 2 ? RGB(94, 112, 118)
-				                      : RGB(220, 210, 167));
+				          ? RGB(196, 153, 99)
+				          : (ink == 2 ? RGB(102, 131, 148)
+				                      : RGB(235, 219, 173));
 			else if (type == EXPLOSION || type == SHOT)
 				color = ink == 1 ? RGB(245, 127, 47)
 				                 : RGB(255, 222, 121);
@@ -310,6 +323,23 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 					int shade =
 					    sy == 0 ? 13 : (sy == 2 ? -17 : 0);
 					uint32_t c = Shade(color, shade);
+					if (type == TARGET || type == BALLOON) {
+						const uint8_t *cell =
+						    sym->data + y * sym->w + x;
+						if ((sx == 0 &&
+						     (x == 0 || !cell[-1])) ||
+						    (sx == S - 1 &&
+						     (x == sym->w - 1 ||
+						      !cell[1])) ||
+						    (sy == 0 &&
+						     (y == 0 ||
+						      !cell[-sym->w])) ||
+						    (sy == S - 1 &&
+						     (y == sym->h - 1 ||
+						      !cell[sym->w]))) {
+							c = RGB(43, 49, 51);
+						}
+					}
 					// Small panel rivets and linen seams on
 					// the planes.
 					if (type == PLANE && sx == 1 &&
