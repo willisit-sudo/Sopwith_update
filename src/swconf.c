@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: keep Options entries clear of the Escape hint.
 // Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-10: enhanced presentation prototype and F9 switching.
@@ -23,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "enhanced.h"
 #include "pcsound.h"
 #include "timer.h"
 #include "video.h"
@@ -71,6 +73,8 @@ static const struct conf_option confoptions[] = {
     {"vid_fullscreen", CONF_BOOL, {&vid_fullscreen}},
     {"vid_integer_scaling", CONF_BOOL, {&vid_integer_scaling}},
     {"vid_enhanced", CONF_BOOL, {&vid_enhanced}},
+    {"vid_modern_title", CONF_BOOL, {&vid_modern_title}},
+    {"snd_modern_music", CONF_BOOL, {&snd_modern_music}},
     {"snd_enhanced", CONF_BOOL, {&snd_enhanced}},
     {"snd_tinnyfilter", CONF_BOOL, {&snd_tinnyfilter}},
     {"conf_video_palette", CONF_INT, {&conf_video_palette}},
@@ -291,8 +295,21 @@ static const struct menu keys_menu = {
     keys_menu_items,
 };
 
+static const struct menuitem title_menu_items[] = {
+    CONFIG_OPTION("Modern splash", "vid_modern_title"),
+    CONFIG_OPTION("Modern title music", "snd_modern_music"),
+    {0, NULL},
+};
+
+static const struct menu title_menu = {
+    FullscreenBackground,
+    "TITLE SETTINGS",
+    title_menu_items,
+};
+
 static const struct menuitem options_menu_items[] = {
     {'K', "Key bindings >>>", SubMenu, &keys_menu},
+    {'T', "Title settings >>>", SubMenu, &title_menu},
 #ifndef NO_FULLSCREEN
     CONFIG_OPTION("Run fullscreen", "vid_fullscreen"),
 #endif

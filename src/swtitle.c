@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -19,6 +20,7 @@
 #include "emscripten.h"
 #endif
 
+#include "enhanced.h"
 #include "video.h"
 
 #include "hiscore.h"
@@ -281,6 +283,33 @@ void swtitln(void)
 	// clear the screen
 	Vid_ClearBuf();
 
+	if (vid_modern_title) {
+		enhanced_title_frame = true;
+		swcolor(3);
+		swposcur(3, 3);
+		swputs("S O P W I T H   U P D A T E");
+		swcolor(1);
+		swposcur(3, 6);
+		swputs("FIRST PLAYABLE");
+		i = Timer_GetMS() - title_screen_start;
+		if ((i / HIGH_SCORE_PERIOD) % 2 != 0) {
+			Vid_ClearBuf();
+			enhanced_title_frame = true;
+			DrawHighScoreTable();
+		} else {
+			swcolor(3);
+			swposcur(3, 9);
+			swputs("(c) BMB Compuscience");
+			swposcur(3, 10);
+			swputs("(c) 1984-2000 David L. Clark");
+			swposcur(3, 11);
+			swputs("(c) Simon Howard, Jesse Smith");
+			swposcur(3, 12);
+			swputs("GNU GPL");
+		}
+		return;
+	}
+
 	DrawTitleScreenElements();
 
 	// We show the title screen, but after five seconds it switches to the
@@ -425,8 +454,8 @@ static enum menu_action QuitGame(const struct menuitem *item)
 #endif
 
 static const struct menuitem main_menu_items[] = {
-    {'S', "single player", SubMenu, &single_player_menu},
-    {'C', "single player versus computer", StartVsComputer},
+    {'S', "Ground targets only", SubMenu, &single_player_menu},
+    {'C', "Ground targets + enemy planes", StartVsComputer},
 #ifdef TCPIP
     {'N', "network game", SubMenu, &netgame_menu},
 #endif

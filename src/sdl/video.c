@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 // Modified 2026-11-10 for Sopwith Update: display scaling preferences.
@@ -238,7 +239,8 @@ void Vid_Update(void)
 	// Make sure the pillarboxes are kept clear each frame.
 	SDL_RenderClear(renderer);
 
-	if (vid_enhanced && Enhanced_HasFrame() && !touch_area_enabled) {
+	if ((enhanced_title_frame || (vid_enhanced && Enhanced_HasFrame())) &&
+	    !touch_area_enabled) {
 		if (texture_enhanced == NULL) {
 			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
 			texture_enhanced = SDL_CreateTexture(
@@ -251,7 +253,12 @@ void Vid_Update(void)
 				    SDL_GetError());
 			}
 		}
-		Enhanced_Render(enhanced_pixels, ENHANCED_WIDTH);
+		if (enhanced_title_frame) {
+			Enhanced_RenderTitle(enhanced_pixels, vid_vram,
+			                     vid_pitch);
+		} else {
+			Enhanced_Render(enhanced_pixels, ENHANCED_WIDTH);
+		}
 		SDL_UpdateTexture(texture_enhanced, NULL, enhanced_pixels,
 		                  ENHANCED_WIDTH * sizeof(uint32_t));
 		SDL_RenderCopy(renderer, texture_enhanced, NULL, NULL);

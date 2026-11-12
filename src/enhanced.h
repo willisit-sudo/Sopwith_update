@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 // Copyright (C) 2026 Sopwith Update contributors
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef SOPWITH_ENHANCED_H
@@ -15,4 +16,8 @@ void Enhanced_Capture(const uint8_t *ui, unsigned int pitch, int camera,
                       int tick);
 // Pixels are opaque 0xAARRGGBB, pitch measured in pixels.
 void Enhanced_Render(uint32_t *pixels, unsigned int pitch);
+extern bool vid_modern_title;
+extern bool enhanced_title_frame;
+void Enhanced_RenderTitle(uint32_t *pixels, const uint8_t *ui,
+                          unsigned int pitch);
 #endif

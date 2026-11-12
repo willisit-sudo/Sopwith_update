@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 1984-2000 David L. Clark
@@ -34,6 +35,8 @@ void Speaker_Output(unsigned short count);
 
 extern bool snd_tinnyfilter;
 extern bool snd_enhanced;
+extern bool snd_modern_music;
+void Speaker_TitleMusic(bool playing);
 
 // Called from the game thread.
 void Speaker_EnhancedFrame(bool active, int throttle, bool engine);

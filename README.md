@@ -41,6 +41,10 @@ Based on Sopwith by David L. Clark and SDL Sopwith by Simon Howard and contribut
 
 ## Graphics prototype
 
-Classic remains the default. Press F9 during a game to compare. Menus remain classic, while enhanced gameplay uses the original HUD as an overlay. Press F10 during play to switch between classic speaker audio and synthesized engine, gunfire, and impact sounds. The setting is saved independently of graphics. The usual sound key still mutes either mode.
+Classic remains the default. Press F9 during a game to compare. The splash defaults to a new illustrated title. Options → Title settings independently switches Modern splash and Modern title music back to the original versions. Enhanced gameplay uses the original HUD as an overlay. Press F10 during play to switch between classic speaker audio and synthesized engine, gunfire, and impact sounds. The setting is saved independently of graphics. The usual sound key still mutes either mode.
 
 The replacement biplane is drawn procedurally in its original flight poses; damaged and finale sprites and nonstandard-size plane symbols retain shaded original artwork. Scenery and colours are an initial experiment, not a finished art direction. Enhanced world graphics currently fall back to classic when touch controls are active. This keeps the touch panel usable.
+
+## First playable
+
+Press **S** for ground targets only or **C** for ground targets and enemy planes. At the end of a round the game shows Level cleared or Out of planes. The original sound key still controls gameplay sound. Start with `-q` to start silent.

@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 1984-2000 David L. Clark
@@ -436,6 +437,7 @@ void swsound(void)
 
 	soundticks = 0;
 	titleflg = false;
+	Speaker_TitleMusic(false);
 
 	Speaker_EnhancedFrame(
 	    soundflg && soundtype != 0 && consoleplayer != NULL,
@@ -507,6 +509,7 @@ void sound(int type, int parm, OBJECTS *ob)
 {
 	// if we are already playing the title music, ignore
 	if (type == S_TITLE) {
+		Speaker_TitleMusic(true);
 		Speaker_EnhancedFrame(false, 0, false);
 		if (!titleflg) {
 			titlplace = 0;

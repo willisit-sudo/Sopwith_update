@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 2001-2005 Simon Howard
@@ -43,6 +44,9 @@ struct filter {
 
 bool snd_tinnyfilter = 1;
 bool snd_enhanced;
+bool snd_modern_music = true;
+static bool modern_title_playing;
+static unsigned int music_sample;
 static bool sound_initted = false;
 static bool speaker_on = false;
 static SDL_AudioDeviceID audio_dev;
@@ -276,6 +280,48 @@ static void MixEnhanced(int16_t *stream, int count)
 	}
 }
 
+void Speaker_TitleMusic(bool playing)
+{
+	if (!sound_initted)
+		return;
+	SDL_LockAudioDevice(audio_dev);
+	bool enabled = playing && snd_modern_music && soundflg;
+	if (enabled && !modern_title_playing)
+		music_sample = 0;
+	modern_title_playing = enabled;
+	SDL_UnlockAudioDevice(audio_dev);
+}
+
+// Original four-bar title loop, with plucked lead, bass and soft chords.
+static void MixTitleMusic(int16_t *stream, int count)
+{
+	static const float melody[] = {
+	    440,     523.25f, 659.25f, 587.33f, 523.25f, 440,     392, 329.63f,
+	    349.23f, 440,     523.25f, 659.25f, 587.33f, 523.25f, 392, 440};
+	static const float bass[] = {110, 82.41f, 87.31f, 98};
+	int beat_samples = output_freq / 4;
+	int i;
+	for (i = 0; i < count; ++i) {
+		unsigned int step = music_sample / beat_samples;
+		float note_time =
+		    (music_sample % beat_samples) / (float) output_freq;
+		float chord_time =
+		    (music_sample % (beat_samples * 4)) / (float) output_freq;
+		float lead = 2.0f * M_PI * melody[step] * note_time;
+		float low = 2.0f * M_PI * bass[step / 4] * chord_time;
+		float attack = fminf(note_time * 200.0f, 1.0f);
+		float chord_attack = fminf(chord_time * 40.0f, 1.0f);
+		float sample =
+		    attack * expf(-11.0f * note_time) *
+		    (0.14f * sinf(lead) + 0.032f * sinf(2.0f * lead));
+		sample += chord_attack * expf(-3.8f * chord_time) *
+		          (0.10f * sinf(low) + 0.032f * sinf(low * 3.0f) +
+		           0.024f * sinf(low * 4.0f));
+		stream[i] = (int16_t) (sample * 23000.0f);
+		music_sample = (music_sample + 1) % (beat_samples * 16);
+	}
+}
+
 // SDL callback function to generate sound output
 static void SoundCallback(void *userdata, Uint8 *stream8, int len)
 {
@@ -293,6 +339,11 @@ static void SoundCallback(void *userdata, Uint8 *stream8, int len)
 	// We save the time so that the multiple time slices all fit together
 	// smoothly. If we have changed frequency since last time, we need to
 	// adjust lasttime to the new frequency
+	if (modern_title_playing) {
+		MixTitleMusic(stream, len);
+		lasttime = 0;
+		return;
+	}
 	if (enhanced.active) {
 		MixEnhanced(stream, len);
 		lasttime = 0;

@@ -1,3 +1,5 @@
+#include <string.h>
+// Modified 2026-11-12: first playable title, music and round results.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -12,8 +14,8 @@
 //        swend    -      SW end of game
 //
 
-#include "swend.h"
 #include "sw.h"
+#include "swend.h"
 #include "swmain.h"
 #include "swobject.h"
 #include "swsound.h"
@@ -95,8 +97,13 @@ void dispendmessage(void)
 {
 	if (consoleplayer->ob_endsts != PLAYING) {
 		swcolor(0x82);
-		swposcur((SCR_WDTH / 16) - 4, 12);
-		swputs("THE END");
+		const char *result =
+		    consoleplayer->ob_endsts == WINNER
+		        ? "LEVEL CLEARED"
+		        : (playmode == PLAYMODE_ASYNCH ? "ROUND LOST"
+		                                       : "OUT OF PLANES");
+		swposcur((SCR_WDTH / 8 - strlen(result)) / 2, 12);
+		swputs(result);
 	}
 }
 

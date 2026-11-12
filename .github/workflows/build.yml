@@ -134,6 +134,20 @@ jobs:
         mkdir srcdist
         mv *.tar.gz srcdist/
 
+    - name: Package Linux release
+      if: ${{ matrix.config.src_package && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Prepare first playable v0.1.0' }}
+      run: |
+        mkdir linux-dist
+        cp src/sopwith README.md COPYING.md AUTHORS linux-dist/
+        tar -C linux-dist -czf sopwith-update-linux-x64.tar.gz .
+
+    - name: Upload Linux release package
+      if: ${{ matrix.config.src_package && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Prepare first playable v0.1.0' }}
+      uses: actions/upload-artifact@v6
+      with:
+        name: sopwith-release-linux
+        path: sopwith-update-linux-x64.tar.gz
+
     - name: Build package (Windows)
       if: runner.os == 'Windows'
       run: |
@@ -182,3 +196,28 @@ jobs:
         if-no-files-found: ignore
         name: formatting-fixes.diff
         path: formatting-fixes.diff
+
+  first_playable_release:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Prepare first playable v0.1.0' }}
+    needs: [build, check_style_etc]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: packages
+    - name: Publish first playable prerelease
+      run: |
+        set -eu
+        windows=$(find packages -maxdepth 1 -type d -name "sdl-sopwith-*-win64" -print -quit)
+        test -f "$windows/sopwith.exe"
+        (cd "$windows" && zip -q -r "$RUNNER_TEMP/sopwith-update-windows-x64.zip" .)
+        gh release create v0.1.0 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+          --title "Sopwith Update 0.1.0 — First playable" --prerelease \
+          --notes "Choose ground targets only or fly against enemy planes. Options > Title settings switches the illustrated splash and original synth theme independently. F8 changes scaling, F9 graphics, and F10 gameplay audio. Linux x64 needs the SDL2 runtime. Windows x64 includes the required DLLs. Extract the full archive before running." \
+          "$RUNNER_TEMP/sopwith-update-windows-x64.zip" \
+          packages/sopwith-release-linux/sopwith-update-linux-x64.tar.gz \
+          packages/sdl-sopwith-src-*/*.tar.gz

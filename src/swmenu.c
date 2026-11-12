@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -109,6 +110,9 @@ enum menu_action ToggleConfigOption(const struct menuitem *item)
 		Vid_Reset();
 	}
 
+	if (opt->type == CONF_BOOL && opt->value.b == &snd_modern_music) {
+		Speaker_TitleMusic(titleflg);
+	}
 	swsaveconf();
 
 	return MENU_ACTION_NONE;
@@ -133,7 +137,7 @@ void FullscreenBackground(void *_title)
 
 	swcolor(1);
 
-	swposcur(1, 22);
+	swposcur(1, 23);
 	swputs("   ESC - Exit Menu");
 
 	swposcur(0, 5);

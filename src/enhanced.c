@@ -1,3 +1,4 @@
+// Modified 2026-11-12: first playable title, music and round results.
 // Modified 2026-11-12: improve sprite contrast during flight.
 // Copyright (C) 2026 Sopwith Update contributors
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -26,8 +27,12 @@ static struct {
 	} objects[MAX_OBJS];
 } frame;
 
+bool vid_modern_title = true;
+bool enhanced_title_frame;
+
 void Enhanced_ClearFrame(void)
 {
+	enhanced_title_frame = false;
 	frame.valid = false;
 }
 bool Enhanced_HasFrame(void)
@@ -378,4 +383,38 @@ void Enhanced_Render(uint32_t *pixels, unsigned int pitch)
 	}
 	for (x = 0; x < W; ++x)
 		pixels[((SCR_HGHT - HUD) * S) * pitch + x] = RGB(62, 86, 92);
+}
+
+void Enhanced_RenderTitle(uint32_t *pixels, const uint8_t *ui,
+                          unsigned int pitch)
+{
+	static const uint32_t inks[] = {0, RGB(129, 218, 207),
+	                                RGB(255, 192, 124), RGB(255, 241, 207)};
+	int x, y;
+	for (y = 0; y < H; ++y) {
+		for (x = 0; x < W; ++x) {
+			int band = y / 16;
+			int dx = x - 746, dy = y - 180;
+			int ridge = 386 - abs(x % 470 - 235) / 5;
+			uint32_t color =
+			    RGB(24 + band * 4, 53 + band * 3, 79 + band * 2);
+			if (dx * dx + dy * dy < 78 * 78)
+				color = RGB(244, 187, 123);
+			if (y >= ridge)
+				color = RGB(39, 83, 86);
+			if (y >= 428 - abs((x + 140) % 360 - 180) / 5)
+				color = RGB(24, 54, 62);
+			if (x >= 642 && x < 834 && y >= 214 && y < 406) {
+				uint32_t plane = PlaneMaterial(
+				    (x - 642) / 4, (y - 214) / 4, false, 1);
+				if (plane)
+					color = plane;
+			}
+			if (y >= 160 * S)
+				color = y == 160 * S ? RGB(112, 171, 164)
+				                     : RGB(18, 31, 42);
+			unsigned int ink = ui[(y / S) * pitch + x / S] & 3;
+			pixels[y * W + x] = ink ? inks[ink] : color;
+		}
+	}
 }
