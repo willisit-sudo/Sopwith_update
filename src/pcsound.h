@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -32,5 +33,10 @@ void Speaker_Off(void);
 void Speaker_Output(unsigned short count);
 
 extern bool snd_tinnyfilter;
+extern bool snd_enhanced;
+
+// Called from the game thread.
+void Speaker_EnhancedFrame(bool active, int throttle, bool engine);
+void Speaker_EnhancedEffect(bool impact);
 
 #endif

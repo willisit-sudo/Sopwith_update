@@ -1,6 +1,6 @@
 # Sopwith Update
 
-A modern presentation experiment built on [SDL Sopwith](https://github.com/fragglet/sdl-sopwith), preserving classic flight and gameplay while preparing optional enhanced graphics and audio. Early development: a first enhanced graphics prototype is available; enhanced audio is still planned.
+A modern presentation experiment built on [SDL Sopwith](https://github.com/fragglet/sdl-sopwith), preserving classic flight and gameplay while preparing optional enhanced graphics and audio. Early development: a first enhanced graphics prototype is available; enhanced audio is available as an independent prototype.
 
 ## Available now
 
@@ -41,6 +41,6 @@ Based on Sopwith by David L. Clark and SDL Sopwith by Simon Howard and contribut
 
 ## Graphics prototype
 
-Classic remains the default. Press F9 during a game to compare. Menus remain classic, while enhanced gameplay uses the original HUD as an overlay. Audio remains the original speaker emulation in both modes.
+Classic remains the default. Press F9 during a game to compare. Menus remain classic, while enhanced gameplay uses the original HUD as an overlay. Press F10 during play to switch between classic speaker audio and synthesized engine, gunfire, and impact sounds. The setting is saved independently of graphics. The usual sound key still mutes either mode.
 
 The replacement biplane is drawn procedurally in its original flight poses; damaged and finale sprites and nonstandard-size plane symbols retain shaded original artwork. Scenery and colours are an initial experiment, not a finished art direction. Enhanced world graphics currently fall back to classic when touch controls are active. This keeps the touch panel usable.

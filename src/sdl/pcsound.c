@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 2001-2005 Simon Howard
 //
@@ -17,6 +18,7 @@
 #include <math.h>
 
 #include "sw.h"
+#include "swmain.h"
 #include "swsound.h"
 
 #define VOLUME            4000 /* out of 1 << 15 */
@@ -40,6 +42,7 @@ struct filter {
 };
 
 bool snd_tinnyfilter = 1;
+bool snd_enhanced;
 static bool sound_initted = false;
 static bool speaker_on = false;
 static SDL_AudioDeviceID audio_dev;
@@ -189,6 +192,90 @@ static float OversampledSquareWave(int i)
 	return presample / ((float) OVERSAMPLE_FACTOR);
 }
 
+// The game thread publishes targets and effect triggers under the SDL audio
+// device lock. Oscillators and envelopes advance only in the audio callback.
+static struct {
+	bool active;
+	float engine_target, engine_gain, engine_pitch, pitch_target, phase;
+	float shot, impact, rumble, impact_phase;
+	uint32_t noise;
+} enhanced = {.noise = 0x7149f6a1u};
+
+void Speaker_EnhancedFrame(bool active, int throttle, bool engine)
+{
+	if (!sound_initted) {
+		return;
+	}
+	SDL_LockAudioDevice(audio_dev);
+	enhanced.active = snd_enhanced && active;
+	enhanced.engine_target = engine ? 1.0f : 0.0f;
+	enhanced.pitch_target =
+	    48.0f + 13.0f * clamp_range(0, throttle, MAX_THROTTLE);
+	if (!enhanced.active) {
+		enhanced.engine_gain = enhanced.shot = enhanced.impact = 0;
+	}
+	SDL_UnlockAudioDevice(audio_dev);
+}
+
+void Speaker_EnhancedEffect(bool impact)
+{
+	if (!sound_initted || !snd_enhanced || !soundflg) {
+		return;
+	}
+	SDL_LockAudioDevice(audio_dev);
+	if (impact) {
+		enhanced.impact = 1.0f;
+		enhanced.impact_phase = 0;
+	} else {
+		enhanced.shot = 1.0f;
+	}
+	SDL_UnlockAudioDevice(audio_dev);
+}
+
+static void MixEnhanced(int16_t *stream, int count)
+{
+	float dt = 1.0f / output_freq;
+	float shot_decay = expf(-52.0f * dt);
+	float impact_decay = expf(-7.0f * dt);
+	int i;
+
+	for (i = 0; i < count; ++i) {
+		float noise, rotor, sample;
+		enhanced.noise ^= enhanced.noise << 13;
+		enhanced.noise ^= enhanced.noise >> 17;
+		enhanced.noise ^= enhanced.noise << 5;
+		noise = (enhanced.noise >> 16) / 32768.0f - 1.0f;
+		enhanced.rumble += (noise - enhanced.rumble) * (700.0f * dt);
+		enhanced.engine_gain +=
+		    (enhanced.engine_target - enhanced.engine_gain) *
+		    (24.0f * dt);
+		enhanced.engine_pitch +=
+		    (enhanced.pitch_target - enhanced.engine_pitch) *
+		    (18.0f * dt);
+		enhanced.phase += enhanced.engine_pitch * dt;
+		if (enhanced.phase >= 1.0f) {
+			enhanced.phase -= 1.0f;
+		}
+		rotor = sinf(2.0f * M_PI * enhanced.phase) +
+		        0.43f * sinf(4.0f * M_PI * enhanced.phase) +
+		        0.20f * sinf(10.0f * M_PI * enhanced.phase);
+		enhanced.impact_phase += (38.0f + 53.0f * enhanced.impact) * dt;
+		if (enhanced.impact_phase >= 1.0f) {
+			enhanced.impact_phase -= 1.0f;
+		}
+		sample =
+		    enhanced.engine_gain *
+		        (0.09f * rotor + 0.08f * enhanced.rumble) +
+		    enhanced.shot * (0.23f * noise + 0.11f * enhanced.rumble) +
+		    enhanced.impact *
+		        (0.21f * sinf(2.0f * M_PI * enhanced.impact_phase) +
+		         0.53f * enhanced.rumble);
+		enhanced.shot *= shot_decay;
+		enhanced.impact *= impact_decay;
+		stream[i] = (int16_t) (sample * 24000.0f);
+	}
+}
+
 // SDL callback function to generate sound output
 static void SoundCallback(void *userdata, Uint8 *stream8, int len)
 {
@@ -206,7 +293,16 @@ static void SoundCallback(void *userdata, Uint8 *stream8, int len)
 	// We save the time so that the multiple time slices all fit together
 	// smoothly. If we have changed frequency since last time, we need to
 	// adjust lasttime to the new frequency
-	lasttime *= lastfreq / current_freq;
+	if (enhanced.active) {
+		MixEnhanced(stream, len);
+		lasttime = 0;
+		return;
+	}
+	if (current_freq > 0.1f) {
+		lasttime *= lastfreq / current_freq;
+	} else {
+		lasttime = 0;
+	}
 
 	for (i = 0; i < len; ++i) {
 		if (!speaker_on) {

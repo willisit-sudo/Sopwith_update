@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -436,6 +437,12 @@ void swsound(void)
 	soundticks = 0;
 	titleflg = false;
 
+	Speaker_EnhancedFrame(
+	    soundflg && soundtype != 0 && consoleplayer != NULL,
+	    consoleplayer ? consoleplayer->ob_accel : 0,
+	    consoleplayer && (consoleplayer->ob_state == FLYING ||
+	                      consoleplayer->ob_state == WOUNDED));
+
 	switch (soundtype) {
 
 	case 0:
@@ -500,6 +507,7 @@ void sound(int type, int parm, OBJECTS *ob)
 {
 	// if we are already playing the title music, ignore
 	if (type == S_TITLE) {
+		Speaker_EnhancedFrame(false, 0, false);
 		if (!titleflg) {
 			titlplace = 0;
 			titlnote();

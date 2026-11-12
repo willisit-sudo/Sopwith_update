@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -14,6 +15,7 @@
 
 #include <assert.h>
 
+#include "pcsound.h"
 #include "sw.h"
 #include "swauto.h"
 #include "swcollsn.h"
@@ -345,6 +347,9 @@ static void interpret(OBJECTS *ob, int key)
 				swsound();
 			}
 			soundflg = !soundflg;
+			if (soundflg) {
+				Speaker_Init();
+			}
 		}
 	}
 

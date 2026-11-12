@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 //
 // Copyright(C) 1984-2000 David L. Clark
 // Copyright(C) 2001-2005 Simon Howard
@@ -466,6 +467,7 @@ void initshot(OBJECTS *obo, OBJECTS *targ)
 	AdjustBullet(ob, obo);
 
 	insertx(ob, obo);
+	Speaker_EnhancedEffect(false);
 }
 
 // bomb
@@ -780,6 +782,7 @@ void initexpl(OBJECTS *obo, int small)
 	oboclr = obo->ob_clr;
 
 	obotype = obo->ob_type;
+	Speaker_EnhancedEffect(true);
 
 	if (IsExplosive(obo)) {
 		ic = 1;

@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 // Modified 2026-11-10 for Sopwith Update: display scaling preferences.
 //
@@ -22,8 +23,10 @@
 #include <time.h>
 
 #include "enhanced.h"
+#include "pcsound.h"
 #include "sw.h"
 #include "swconf.h"
+#include "swgrpha.h"
 #include "swinit.h"
 #include "swmain.h"
 #include "video.h"
@@ -741,6 +744,16 @@ static void CtrlKeyPress(SDL_Keycode k)
 static void KeyDown(SDL_KeyboardEvent *event)
 {
 	enum gamekey translated;
+
+	if (event->keysym.sym == SDLK_F10 && !CtrlDown() && !AltDown()) {
+		if (!event->repeat) {
+			snd_enhanced = !snd_enhanced;
+			swsaveconf();
+			Notification(snd_enhanced ? "Enhanced audio"
+			                          : "Classic audio");
+		}
+		return;
+	}
 
 	if (event->keysym.sym == SDLK_F9 && !CtrlDown() && !AltDown()) {
 		if (!event->repeat) {

@@ -205,6 +205,18 @@ int main(void)
 	assert(SDL_PushEvent(&event) == 1);
 	Vid_GetKey();
 	assert(!vid_integer_scaling);
+	event.key.keysym.sym = SDLK_F10;
+	event.key.keysym.scancode = SDL_SCANCODE_F10;
+	assert(SDL_PushEvent(&event) == 1);
+	assert(Vid_GetKey() == 0);
+	assert(snd_enhanced && !vid_enhanced && !vid_integer_scaling);
+	event.key.repeat = 1;
+	assert(SDL_PushEvent(&event) == 1);
+	Vid_GetKey();
+	assert(snd_enhanced);
+	snd_enhanced = false;
+	swloadconf();
+	assert(snd_enhanced);
 	CheckEnhanced();
 	Vid_Shutdown();
 	puts("Display integration checks passed: scaling, resize, F8, repeat, "

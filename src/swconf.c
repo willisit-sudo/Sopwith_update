@@ -1,3 +1,4 @@
+// Modified 2026-11-12: switchable synthesized audio.
 // Modified 2026-11-10: enhanced presentation prototype and F9 switching.
 // Modified 2026-11-10 for Sopwith Update: display scaling preferences.
 //
@@ -69,6 +70,7 @@ static const struct conf_option confoptions[] = {
     {"vid_fullscreen", CONF_BOOL, {&vid_fullscreen}},
     {"vid_integer_scaling", CONF_BOOL, {&vid_integer_scaling}},
     {"vid_enhanced", CONF_BOOL, {&vid_enhanced}},
+    {"snd_enhanced", CONF_BOOL, {&snd_enhanced}},
     {"snd_tinnyfilter", CONF_BOOL, {&snd_tinnyfilter}},
     {"conf_video_palette", CONF_INT, {&conf_video_palette}},
 
@@ -292,6 +294,7 @@ static const struct menuitem options_menu_items[] = {
 #ifndef NO_FULLSCREEN
     CONFIG_OPTION("Run fullscreen", "vid_fullscreen"),
 #endif
+    CONFIG_OPTION("Enhanced audio (F10)", "snd_enhanced"),
     CONFIG_OPTION("Enhanced graphics (F9)", "vid_enhanced"),
     CONFIG_OPTION("Crisp pixel scaling (F8)", "vid_integer_scaling"),
     CONFIG_OPTION("Video palette", "conf_video_palette"),
