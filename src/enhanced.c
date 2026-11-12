@@ -372,11 +372,12 @@ static uint32_t StarWarsMaterial(int x, int y, bool enemy, int phase)
 		if (distance <= 65)
 			return distance < 22 ? RGB(35, 49, 58)
 			                     : RGB(151, 162, 170);
-		if ((x >= 7 && x <= 12) || (x >= 36 && x <= 41)) {
-			if (dy <= 15 && dy <= 11 + (x % 7))
-				return (y % 7 == 0 || x == 8 || x == 39)
-				         ? RGB(164, 177, 190)
-				         : RGB(61, 72, 89);
+		int panel = abs(x - 24);
+		if (panel >= 12 && panel <= 18 && dy <= 15 &&
+		    abs(panel - 15) + dy <= 17) {
+			return (panel == 12 || panel == 18 || dy >= 14)
+			         ? RGB(164, 177, 190)
+			         : RGB(61, 72, 89);
 		}
 		if (x >= 12 && x <= 36 && dy <= 2)
 			return RGB(125, 143, 156);
@@ -448,8 +449,11 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 	                frame.objects[n].state == WOUNDED ||
 	                frame.objects[n].state == WOUNDSTALL);
 	uint32_t sprite[48][48];
-	int width = frame.objects[n].symbol->w * S;
-	int height = frame.objects[n].symbol->h * S;
+	const sopsym_t *symbol = frame.objects[n].symbol;
+	bool tie = enemy && enhanced_theme == THEME_STAR_WARS;
+	bool downed_tie = tie && (wreck || frame.objects[n].state == FALLING);
+	int width = symbol->w * S;
+	int height = symbol->h * S;
 	for (y = 0; y < 48; ++y) {
 		for (x = 0; x < 48; ++x) {
 			int dx = x - 24, dy = y - 24;
@@ -459,7 +463,11 @@ static void Plane(uint32_t *p, unsigned int pitch, int n)
 				sy = 47 - sy;
 			uint32_t material =
 			    FlightMaterial(sx, sy, enemy, frame.tick & 1);
-			if (wreck && (sx > 34 || (sx > 20 && sy < 24)))
+			// Keep the cockpit and one solar panel recognizable on
+			// a wreck.
+			if (downed_tie && sx >= 36 && (wreck || sy < 24))
+				material = 0;
+			if (wreck && !tie && (sx > 34 || (sx > 20 && sy < 24)))
 				material = 0;
 			if (material && damaged)
 				material =
@@ -581,9 +589,9 @@ static void Object(uint32_t *p, unsigned int pitch, int n)
 		uint32_t bolt =
 		    player_color ? RGB(255, 83, 67) : RGB(110, 255, 119);
 		int px = frame.objects[n].x * S, py = frame.objects[n].y * S;
-		for (int i = -2; i <= 4; ++i)
-			Pixel(p, pitch, px + i, py + 1, bolt);
-		Pixel(p, pitch, px, py + 1, RGB(255, 245, 222));
+		for (int i = -1; i <= S; ++i)
+			Pixel(p, pitch, px + i, py + S / 2, bolt);
+		Pixel(p, pitch, px + S / 2, py + S / 2, RGB(255, 245, 222));
 		return;
 	}
 	if (enhanced_theme != THEME_BIPLANE && type == EXPLOSION) {

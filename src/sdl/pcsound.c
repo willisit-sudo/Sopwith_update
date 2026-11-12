@@ -216,6 +216,52 @@ static struct {
 	uint32_t noise;
 } enhanced = {.noise = 0x7149f6a1u};
 
+typedef struct {
+	int16_t *samples;
+	int count, cursor;
+} SoundClip;
+
+static SoundClip xwing, rebel, imperial, tie;
+static bool tie_near;
+
+static void LoadClip(SoundClip *clip, const char *base, const char *name)
+{
+	char path[4096];
+	SDL_AudioSpec spec;
+	SDL_AudioCVT cvt;
+	Uint8 *wav;
+	Uint32 length;
+
+	if (SDL_snprintf(path, sizeof(path), "%sstar-wars-audio/%s", base,
+	                 name) >= (int) sizeof(path) ||
+	    !SDL_LoadWAV(path, &spec, &wav, &length))
+		return;
+
+	if (SDL_BuildAudioCVT(&cvt, spec.format, spec.channels, spec.freq,
+	                      AUDIO_S16SYS, 1, output_freq) >= 0) {
+		cvt.buf = SDL_malloc((size_t) length * cvt.len_mult);
+		if (cvt.buf) {
+			cvt.len = length;
+			SDL_memcpy(cvt.buf, wav, length);
+			if (SDL_ConvertAudio(&cvt) == 0) {
+				clip->samples = (int16_t *) cvt.buf;
+				clip->count = cvt.len_cvt / sizeof(int16_t);
+				clip->cursor = clip->count;
+			} else {
+				SDL_free(cvt.buf);
+			}
+		}
+	}
+	SDL_FreeWAV(wav);
+}
+
+static float PlayClip(SoundClip *clip)
+{
+	if (clip->cursor >= clip->count)
+		return 0;
+	return clip->samples[clip->cursor++] / 32768.0f;
+}
+
 void Speaker_EnhancedFrame(bool active, int throttle, bool engine)
 {
 	if (!sound_initted) {
@@ -240,6 +286,30 @@ void Speaker_EnhancedFrame(bool active, int throttle, bool engine)
 		enhanced.pitch_target = 48.0f + 13.0f * power;
 		break;
 	}
+	bool near = false;
+	if (enhanced.active && enhanced.engine_theme == THEME_STAR_WARS &&
+	    consoleplayer && tie.count) {
+		for (int i = 0; i < MAX_PLANES; ++i) {
+			const OBJECTS *plane = planes[i];
+			if (plane &&
+			    plane->ob_faction != consoleplayer->ob_faction &&
+			    (plane->ob_state == FLYING ||
+			     plane->ob_state == WOUNDED) &&
+			    SDL_abs(plane->ob_x - consoleplayer->ob_x) < 110 &&
+			    SDL_abs(plane->ob_y - consoleplayer->ob_y) < 65) {
+				near = true;
+				break;
+			}
+		}
+	}
+	if (near && !tie_near)
+		tie.cursor = 0;
+	tie_near = near;
+	if (!enhanced.active || enhanced.engine_theme != THEME_STAR_WARS) {
+		tie.cursor = tie.count;
+		rebel.cursor = rebel.count;
+		imperial.cursor = imperial.count;
+	}
 	if (!enhanced.active) {
 		enhanced.engine_gain = enhanced.shot = enhanced.impact = 0;
 		enhanced.enemy_blast = 0;
@@ -257,9 +327,11 @@ void Speaker_EnhancedEffect(bool impact, bool enemy)
 		enhanced.impact = 1.0f;
 		enhanced.impact_phase = 0;
 	} else if (enemy && vid_enhanced && enhanced_theme == THEME_STAR_WARS) {
+		imperial.cursor = 0;
 		enhanced.enemy_blast = 1.0f;
 		enhanced.enemy_phase = 0;
 	} else {
+		rebel.cursor = 0;
 		enhanced.shot = 1.0f;
 		enhanced.blaster_phase = 0;
 	}
@@ -354,6 +426,21 @@ static void MixEnhanced(int16_t *stream, int count)
 		    enhanced.impact *
 		        (0.21f * sinf(2.0f * M_PI * enhanced.impact_phase) +
 		         0.53f * enhanced.rumble);
+		if (enhanced.engine_theme == THEME_STAR_WARS) {
+			if (rebel.count)
+				sample += 0.65f * PlayClip(&rebel) -
+				          enhanced.shot * gun;
+			if (imperial.count)
+				sample += 0.55f * PlayClip(&imperial) - enemy;
+			if (xwing.count) {
+				if (xwing.cursor >= xwing.count)
+					xwing.cursor = 0;
+				sample += enhanced.engine_gain *
+				          (0.34f * PlayClip(&xwing) -
+				           enhanced.engine_mix);
+			}
+			sample += 0.40f * PlayClip(&tie);
+		}
 		enhanced.shot *= shot_decay;
 		enhanced.impact *= impact_decay;
 		stream[i] =
@@ -514,7 +601,14 @@ void Speaker_Shutdown(void)
 		return;
 	}
 
+	SDL_CloseAudioDevice(audio_dev);
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
+	SoundClip *clips[] = {&xwing, &rebel, &imperial, &tie};
+	for (unsigned int i = 0; i < SDL_arraysize(clips); ++i) {
+		SDL_free(clips[i]->samples);
+		*clips[i] = (SoundClip){0};
+	}
+	tie_near = false;
 
 	sound_initted = false;
 }
@@ -584,6 +678,14 @@ void Speaker_Init(void)
 	}
 
 	output_freq = audiospec_actual.freq;
+	char *base = SDL_GetBasePath();
+	if (base) {
+		LoadClip(&xwing, base, "X-wing Engine.wav");
+		LoadClip(&rebel, base, "Rebel Laser 1.wav");
+		LoadClip(&imperial, base, "Imperial Laser 1.wav");
+		LoadClip(&tie, base, "TIE Flyby 1.wav");
+		SDL_free(base);
+	}
 
 	atexit(Speaker_Shutdown);
 	sound_initted = true;
