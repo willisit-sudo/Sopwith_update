@@ -176,7 +176,7 @@ void movexy(OBJECTS *ob, int *x, int *y)
 {
 	unsigned int pos = 0;
 
-	pos = (ob->ob_x + ob->ob_dx) << 16;
+	pos = (ob->ob_x + ob->ob_dx) * 65536;
 	pos += ob->ob_lx + ob->ob_ldx;
 
 	// Adding this to avoid range errors -- Jesse
@@ -185,7 +185,7 @@ void movexy(OBJECTS *ob, int *x, int *y)
 	ob->ob_x = (unsigned short) (pos >> 16) & 0xffff;
 	ob->ob_lx = (unsigned short) pos & 0xffff;
 	*x = ob->ob_x;
-	pos = (ob->ob_y + ob->ob_dy) << 16;
+	pos = (ob->ob_y + ob->ob_dy) * 65536;
 	pos += ob->ob_ly + ob->ob_ldy;
 	ob->ob_y = (unsigned short) (pos >> 16) & 0xffff;
 	ob->ob_ly = (unsigned short) pos & 0xffff;
@@ -197,9 +197,9 @@ void movexy(OBJECTS *ob, int *x, int *y)
 void setdxdy(OBJECTS *obj, int dx, int dy)
 {
 	obj->ob_dx = (dx >> 8);
-	obj->ob_ldx = (dx << 8) & 0xffff;
+	obj->ob_ldx = ((unsigned int) dx << 8) & 0xffff;
 	obj->ob_dy = (dy >> 8);
-	obj->ob_ldy = (dy << 8) & 0xffff;
+	obj->ob_ldy = ((unsigned int) dy << 8) & 0xffff;
 }
 
 //

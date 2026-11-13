@@ -506,6 +506,7 @@ static void ThemedTarget(uint32_t *p, unsigned int pitch, int n)
 	    (enhanced_theme == THEME_MOON || enhanced_theme == THEME_STAR_WARS);
 	bool vehicle = frame.objects[n].type == OX || kind == TARGET_TANK ||
 	               kind == TARGET_TRUCK || kind == TARGET_TANKER_TRUCK;
+	bool tank = frame.objects[n].type == TARGET && kind == TARGET_TANK;
 	bool fuel = kind == TARGET_OIL_TANK;
 	uint32_t edge = RGB(34, 43, 49);
 	uint32_t wall = moon ? RGB(166, 178, 195) : RGB(157, 166, 151);
@@ -521,32 +522,79 @@ static void ThemedTarget(uint32_t *p, unsigned int pitch, int n)
 				int rubble = 34 + (u / 6 * 7) % 10;
 				if (u >= 5 && u <= 43 && v >= rubble && v <= 46)
 					color = v == rubble ? roof : edge;
+			} else if (tank) {
+				uint32_t armor = moon ? RGB(123, 146, 177)
+				                      : RGB(117, 137, 83);
+				if (u >= 4 && u <= 43 && v >= 34 && v <= 45) {
+					color = edge;
+					if (v >= 37 && v <= 42 && u % 8 >= 2 &&
+					    u % 8 <= 5)
+						color = Shade(armor, -20);
+				}
+				if (v >= 27 && v <= 36 &&
+				    u >= 6 + (34 - v) / 2 && u <= 41)
+					color =
+					    v <= 29 ? Shade(armor, 30) : armor;
+				if (u >= 12 && u <= 31 && v >= 19 && v <= 28)
+					color =
+					    v <= 21 ? Shade(armor, 42) : armor;
+				if (u >= 28 && u <= 46 && v >= 21 && v <= 24)
+					color =
+					    v == 21 ? Shade(armor, 32) : edge;
 			} else if (vehicle) {
-				if (v >= 35 && u >= 4 && u <= 44)
+				bool tanker = kind == TARGET_TANKER_TRUCK;
+				if (u >= 5 && u <= 43 && v >= 34 && v <= 39)
+					color = edge;
+				if (u >= 28 && u <= 42 && v >= 24 && v <= 36)
+					color = u >= 35 && v <= 29
+					          ? RGB(67, 133, 153)
+					          : roof;
+				if (u >= 5 && u <= 27 && v >= 24 && v <= 35)
+					color = tanker && v <= 27
+					          ? RGB(214, 147, 83)
+					          : wall;
+				if ((u - 12) * (u - 12) + (v - 40) * (v - 40) <=
+				        25 ||
+				    (u - 36) * (u - 36) + (v - 40) * (v - 40) <=
+				        25)
+					color = v == 40 ? roof : edge;
+			} else if (fuel) {
+				int dx = u - 24;
+				int top = 13 + dx * dx / 72;
+				if (abs(dx) <= 17 && v >= top && v <= 45) {
+					color = Shade(wall, 16 - abs(dx) * 3);
+					if (v <= top + 3)
+						color = roof;
+					else if (v >= 28 && v <= 31)
+						color = RGB(214, 147, 83);
+					else if (v >= 43)
+						color = edge;
+				}
+			} else if (kind == TARGET_FACTORY) {
+				if (u >= 5 && u <= 39 &&
+				    v >= 21 + (u - 5) % 11 / 2 && v <= 45)
+					color = v >= 42 ? edge : wall;
+				if (u >= 35 && u <= 42 && v >= 9 && v <= 44)
 					color =
-					    v >= 43 || u % 8 == 0 ? edge : wall;
-				if (v >= 28 && v < 38 && u >= 6 && u <= 42)
-					color = moon ? roof : RGB(103, 127, 71);
-				if (v >= 21 && v < 30 && u >= 14 && u <= 33)
-					color = roof;
-				if (v >= 23 && v < 26 && u >= 29 && u <= 46)
-					color =
-					    moon ? RGB(116, 223, 239) : edge;
-			} else if (u >= 4 && u <= 43 && v >= 12 && v <= 46) {
-				int dx = u - 24, dy = v - 35;
-				if (moon && v < 32 &&
-				    dx * dx + dy * dy > 22 * 22)
-					continue;
-				color = u <= 5 || u >= 42 || v >= 44
-				          ? edge
-				          : (v < 22 ? roof : wall);
-				if (v >= 26 && v <= 32 && u % 11 >= 4)
+					    v <= 12 ? roof : Shade(wall, -20);
+				if (u >= 8 && u <= 32 && v >= 31 && v <= 35 &&
+				    u % 8 <= 4)
 					color = moon ? RGB(84, 206, 221)
 					             : RGB(54, 76, 89);
-				if (fuel && v >= 34 && v <= 37)
-					color = RGB(210, 127, 72);
-				else if (u >= 21 && u <= 29 && v >= 36)
-					color = edge;
+			} else {
+				int top = 12 + abs(u - 24) *
+				                   (moon ? abs(u - 24) : 11) /
+				                   44;
+				if (u >= 4 && u <= 43 && v >= top && v <= 45) {
+					color = v <= top + 4 ? roof : wall;
+					if (u >= 10 && u <= 37 && v >= 26)
+						color = v <= 28
+						          ? Shade(roof, 32)
+						          : Shade(edge,
+						                  u % 5 * 4);
+					if (v >= 43)
+						color = edge;
+				}
 			}
 			if (color)
 				Pixel(p, pitch, frame.objects[n].x * S + x,

@@ -54,7 +54,7 @@ jobs:
 
         exclude:
           - config:
-              name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v0.1.3' && 'macOS arm64' || '' }}
+              name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v1.0.0' && 'macOS arm64' || '' }}
 
     steps:
     - name: Install build dependencies (Chocolatey, Windows)
@@ -94,10 +94,10 @@ jobs:
     - name: Find Git version
       id: version
       env:
-        RELEASE_BUILD: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v0.1.3' }}
+        RELEASE_BUILD: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v1.0.0' }}
       run: |
         if [ "$RELEASE_BUILD" = true ]; then
-          VERSION=0.1.3
+          VERSION=1.0.0
         elif git describe --exact-match --tags >/dev/null; then
           VERSION=$(git describe --exact-match --tags)
           VERSION=${VERSION/#sdl-sopwith-/}
@@ -143,14 +143,14 @@ jobs:
         mv *.tar.gz srcdist/
 
     - name: Package Linux release
-      if: ${{ matrix.config.src_package && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v0.1.3' }}
+      if: ${{ matrix.config.src_package && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v1.0.0' }}
       run: |
         mkdir linux-dist
         cp src/sopwith README.md COPYING.md AUTHORS linux-dist/
         tar -C linux-dist -czf sopwith-update-linux-x64.tar.gz .
 
     - name: Upload Linux release package
-      if: ${{ matrix.config.src_package && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v0.1.3' }}
+      if: ${{ matrix.config.src_package && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v1.0.0' }}
       uses: actions/upload-artifact@v6
       with:
         name: sopwith-release-linux
@@ -206,7 +206,7 @@ jobs:
         path: formatting-fixes.diff
 
   publish_release:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v0.1.3' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish v1.0.0' }}
     needs: [build, check_style_etc]
     runs-on: ubuntu-latest
     permissions:
@@ -217,15 +217,15 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         path: packages
-    - name: Publish v0.1.3 prerelease
+    - name: Publish v1.0.0
       run: |
         set -eu
         windows=$(find packages -maxdepth 1 -type d -name "sdl-sopwith-*-win64" -print -quit)
         test -f "$windows/sopwith.exe"
         (cd "$windows" && zip -q -r "$RUNNER_TEMP/sopwith-update-windows-x64.zip" .)
-        gh release create v0.1.3 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-          --title "Sopwith Update 0.1.3" --prerelease \
-          --notes "Star Wars artwork adds an X-wing, TIE fighters, and themed crash visuals. For optional local audio, create a star-wars-audio folder beside the executable and add X-wing Engine.wav, Rebel Laser 1.wav, Imperial Laser 1.wav, and TIE Flyby 1.wav. Select Star Wars artwork and enable Enhanced audio with F10. WAVs are supplied by the player. Linux x64 needs the SDL2 runtime. Windows x64 includes the required DLLs." \
+        gh release create v1.0.0 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+          --title "Sopwith Update 1.0.0"  \
+          --notes "Updated hangars, factories, fuel tanks and vehicles in the enhanced themes. Includes Linux startup and computer flight fixes. For optional local audio, create a star-wars-audio folder beside the executable and add X-wing Engine.wav, Rebel Laser 1.wav, Imperial Laser 1.wav, and TIE Flyby 1.wav. Select Star Wars artwork and enable Enhanced audio with F10. WAVs are supplied by the player. Linux x64 needs the SDL2 runtime. Windows x64 includes the required DLLs." \
           "$RUNNER_TEMP/sopwith-update-windows-x64.zip" \
           packages/sopwith-release-linux/sopwith-update-linux-x64.tar.gz \
           packages/sdl-sopwith-src-*/*.tar.gz

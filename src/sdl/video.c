@@ -185,8 +185,8 @@ static SDL_Surface *SurfaceFromSopsym(sopsym_t *sym)
 				continue;
 			}
 			p = &pal[src[sx]];
-			dst[x] =
-			    (p->r << 24) | (p->g << 16) | (p->b << 8) | 0xff;
+			dst[x] = ((uint32_t) p->r << 24) | (p->g << 16) |
+			         (p->b << 8) | 0xff;
 		}
 	}
 
